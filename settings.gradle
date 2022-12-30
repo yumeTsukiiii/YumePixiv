@@ -11,6 +11,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
+    // 无需再写 versionCatalogs，默认会应用 libs.versions.toml
 }
 rootProject.name = "YumePixiv"
 include ':app'
