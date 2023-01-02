@@ -51,6 +51,7 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
     implementation 'androidx.activity:activity-compose:1.6.1'
+    implementation "androidx.navigation:navigation-compose:2.5.3"
 
     // 统一管理 compose 相关依赖版本，见 libs.versions.toml
     var composeBom = platform(libs.androidx.compose.bom)
@@ -63,6 +64,9 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // 图片库
+    implementation("io.coil-kt:coil-compose:2.2.2")
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
