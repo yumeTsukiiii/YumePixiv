@@ -17,7 +17,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 
@@ -72,10 +71,10 @@ fun Home() {
                         Icon(imageVector = Icons.Default.Search, contentDescription = null)
                     }
                 },
-//                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior
             )
         },
-//        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
 
         Column(modifier = Modifier.padding(paddingValues)) {
