@@ -77,53 +77,48 @@ fun IllustScreen(
                 )
         ) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                ListItem(
-                    leadingContent = {
-                        Icon(imageVector = Icons.Default.Star, contentDescription = null)
-                    },
-                    headlineText = {
-                        Text(text = "排行榜")
-                    },
-                    trailingContent = {
-                        Row {
-                            IconButton(
-                                onClick = {}
-                            ) {
-                                Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null)
-                            }
+            ListItem(
+                leadingContent = {
+                    Icon(imageVector = Icons.Default.Star, contentDescription = null)
+                },
+                headlineText = {
+                    Text(text = "排行榜")
+                },
+                trailingContent = {
+                    Row {
+                        IconButton(
+                            onClick = {}
+                        ) {
+                            Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null)
                         }
                     }
-                )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(8.dp),
-                ) {
-                    items(10) {
-                        IllustRankCard(
-                            imageUrl = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7",
-                            author = "二阶堂梦月",
-                            title = "如月澪",
-                            pageCount = (1..9).random(),
-                            authorAvatar = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7",
-                            modifier = Modifier.size(156.dp)
-                        )
-                    }
                 }
+            )
 
-                ListItem(
-                    leadingContent = {
-                        Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
-                    },
-                    headlineText = {
-                        Text(text = "为你推荐")
-                    },
-                )
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(8.dp),
+            ) {
+                items(10) {
+                    IllustRankCard(
+                        imageUrl = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7",
+                        author = "二阶堂梦月",
+                        title = "如月澪",
+                        pageCount = (1..9).random(),
+                        authorAvatar = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7",
+                        modifier = Modifier.size(156.dp)
+                    )
+                }
             }
+
+            ListItem(
+                leadingContent = {
+                    Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
+                },
+                headlineText = {
+                    Text(text = "为你推荐")
+                },
+            )
 
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
