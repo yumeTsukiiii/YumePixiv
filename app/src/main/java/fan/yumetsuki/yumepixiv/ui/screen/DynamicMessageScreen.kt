@@ -6,8 +6,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import fan.yumetsuki.yumepixiv.ui.Route
 
-object DynamicMessage: Route(
+val dynamicMessage = Route(
     route = "dynamicMessage",
     label = "动态",
     icon = Icons.Default.Star,
@@ -15,7 +16,7 @@ object DynamicMessage: Route(
 )
 
 fun NavGraphBuilder.dynamicMessageScreen() {
-    composable(DynamicMessage.route) {
+    composable(dynamicMessage.route) {
         DynamicMessage()
     }
 }

@@ -19,8 +19,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import fan.yumetsuki.yumepixiv.ui.Route
 
-object Home: Route(
+val home = Route(
     route = "home",
     label = "首页",
     icon = Icons.Default.Home,
@@ -28,7 +29,7 @@ object Home: Route(
 )
 
 fun NavGraphBuilder.homeScreen() {
-    composable(Home.route) {
+    composable(home.route) {
         Home()
     }
 }

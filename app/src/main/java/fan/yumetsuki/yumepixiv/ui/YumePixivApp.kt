@@ -10,17 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import fan.yumetsuki.yumepixiv.ui.screen.DynamicMessage
-import fan.yumetsuki.yumepixiv.ui.screen.Home
+import fan.yumetsuki.yumepixiv.ui.screen.dynamicMessage
+import fan.yumetsuki.yumepixiv.ui.screen.home
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YumePixivApp() {
-    val appRoutes = listOf(Home, DynamicMessage)
+    val appRoutes = listOf(home, dynamicMessage)
     val navController = rememberNavController()
 
     Scaffold(
@@ -58,7 +57,7 @@ fun YumePixivApp() {
             }
         }
     ) {
-        NavHost(navController = navController, startDestination = Home.route, modifier = Modifier.padding(it)) {
+        NavHost(navController = navController, startDestination = home.route, modifier = Modifier.padding(it)) {
             appRoutes.forEach { navPage ->
                 navPage.content(this, navController)
             }
