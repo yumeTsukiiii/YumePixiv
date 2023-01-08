@@ -9,5 +9,4 @@ class Route(
     val route: String,
     val label: String,
     val icon: ImageVector?,
-    val content: NavGraphBuilder.(navController: NavController) -> Unit,
 )

@@ -6,20 +6,20 @@ data class Illust(
     /**
      * 插画推荐缩略图
      */
-    val coverPage: String,
+    val coverPage: String?,
     val user: User,
     val pageCount: Int,
     val metaPages: List<Image>,
     val totalView: Int,
     val totalBookMarks: Int,
-    val isBookMarked: Boolean
+    val isBookMarked: Boolean,
 ) {
 
     data class User(
         val id: Long,
         val name: String,
         val account: String,
-        val avatar: String,
+        val avatar: String?,
         val isFollowed: Boolean
     )
 

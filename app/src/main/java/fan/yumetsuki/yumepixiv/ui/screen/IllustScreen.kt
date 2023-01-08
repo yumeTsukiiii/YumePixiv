@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -14,98 +15,141 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.request.ImageRequest
 import fan.yumetsuki.yumepixiv.ui.components.IllustCard
 import fan.yumetsuki.yumepixiv.ui.components.IllustRankCard
 import fan.yumetsuki.yumepixiv.ui.components.nestedScrollable
+import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
+
+@Composable
+fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
+    return ImageRequest.Builder(LocalContext.current)
+        .addHeader("Referer", "https://app-api.pixiv.net/")
+        // TODO 不要每次计算，给一个特定的 host 全局配置
+        .addHeader("Host", imageUrl.split("/")[2])
+        .crossfade(500)
+}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun IllustScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: IllustViewModel = hiltViewModel()
 ) {
+
+    val screenState by viewModel.uiState.collectAsState()
 
     val parentScrollState = rememberScrollState()
     val childScrollState = rememberLazyStaggeredGridState()
 
-    BoxWithConstraints(
-        modifier = modifier.nestedScrollable(
-            parentScrollState = parentScrollState,
-            childScrollState = childScrollState,
-            orientation = Orientation.Vertical,
-            overscrollEffect = ScrollableDefaults.overscrollEffect()
-        ) {
-            childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
+    LaunchedEffect(Unit) {
+        viewModel.refreshIllusts()
+    }
+
+    if (screenState.isLoading) {
+        Box(modifier = modifier) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
-    ) {
-
-        Column(
-            modifier = Modifier
-                .verticalScroll(parentScrollState, enabled = false)
-                .wrapContentHeight(
-                    align = Alignment.Top,
-                    unbounded = true
-                )
+    } else if (screenState.rankingIllust.isEmpty() && screenState.illusts.isEmpty()) {
+        Box(modifier = modifier) {
+            // TODO UI 修改
+            Text(text = "没有数据欸！！！")
+        }
+    } else {
+        BoxWithConstraints(
+            modifier = modifier.nestedScrollable(
+                parentScrollState = parentScrollState,
+                childScrollState = childScrollState,
+                orientation = Orientation.Vertical,
+                overscrollEffect = ScrollableDefaults.overscrollEffect()
+            ) {
+                childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
+            }
         ) {
 
-            ListItem(
-                leadingContent = {
-                    Icon(imageVector = Icons.Default.Star, contentDescription = null)
-                },
-                headlineText = {
-                    Text(text = "排行榜")
-                },
-                trailingContent = {
-                    Row {
-                        IconButton(
-                            onClick = {}
-                        ) {
-                            Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null)
+            Column(
+                modifier = Modifier
+                    .verticalScroll(parentScrollState, enabled = false)
+                    .wrapContentHeight(
+                        align = Alignment.Top,
+                        unbounded = true
+                    )
+            ) {
+
+                ListItem(
+                    leadingContent = {
+                        Icon(imageVector = Icons.Default.Star, contentDescription = null)
+                    },
+                    headlineText = {
+                        Text(text = "排行榜")
+                    },
+                    trailingContent = {
+                        Row {
+                            IconButton(
+                                onClick = {}
+                            ) {
+                                Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null)
+                            }
+                        }
+                    }
+                )
+
+                if (screenState.rankingIllust.isNotEmpty()) {
+                    // TODO else 展示
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(8.dp),
+                    ) {
+                        items(screenState.rankingIllust) { rankingIllust ->
+                            IllustRankCard(
+                                imageUrl = rankingIllust.imageUrl ?: TODO("默认图片"),
+                                author = rankingIllust.author,
+                                title = rankingIllust.title,
+                                pageCount = rankingIllust.pageCount,
+                                authorAvatar = rankingIllust.authorAvatar ?: TODO("默认图片"),
+                                imageRequestBuilder = imageRequestBuilder(rankingIllust.imageUrl),
+                                avatarImageRequestBuilder = imageRequestBuilder(rankingIllust.imageUrl),
+                                modifier = Modifier.size(156.dp)
+                            )
                         }
                     }
                 }
-            )
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(8.dp),
-            ) {
-                items(10) {
-                    IllustRankCard(
-                        imageUrl = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7",
-                        author = "二阶堂梦月",
-                        title = "如月澪",
-                        pageCount = (1..9).random(),
-                        authorAvatar = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7",
-                        modifier = Modifier.size(156.dp)
-                    )
-                }
-            }
+                ListItem(
+                    leadingContent = {
+                        Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
+                    },
+                    headlineText = {
+                        Text(text = "为你推荐")
+                    },
+                )
 
-            ListItem(
-                leadingContent = {
-                    Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
-                },
-                headlineText = {
-                    Text(text = "为你推荐")
-                },
-            )
-
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                contentPadding = PaddingValues(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.height(this@BoxWithConstraints.maxHeight),
-                state = childScrollState,
-                userScrollEnabled = false
-            ) {
-                items(100) {
-                    IllustCard(
-                        imageUrl = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7",
-                        pageCount = (1..9).random(),
-                        modifier = Modifier.height((200..300).random().dp)
-                    )
+                if (screenState.illusts.isNotEmpty()) {
+                    // TODO else 展示
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Fixed(2),
+                        contentPadding = PaddingValues(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.height(this@BoxWithConstraints.maxHeight),
+                        state = childScrollState,
+                        userScrollEnabled = false
+                    ) {
+                        items(screenState.illusts) { illust ->
+                            IllustCard(
+                                imageUrl = illust.imageUrl ?: TODO("默认图片"),
+                                pageCount = illust.pageCount,
+                                modifier = Modifier.height(illust.height),
+                                imageRequestBuilder = imageRequestBuilder(illust.imageUrl)
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,8 +88,9 @@ fun RecommendCard(
     isFavorite: Boolean = false,
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     extraContent: (@Composable ColumnScope.() -> Unit)? = null,
-    content: (@Composable BoxScope.() -> Unit)? = null,
+    content: (@Composable BoxScope.() -> Unit)? = null
 ) {
     Card(
         shape = ShapeDefaults.ExtraSmall,
@@ -98,9 +100,8 @@ fun RecommendCard(
             modifier = Modifier.weight(1.0f)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
+                model = imageRequestBuilder
                     .data(imageUrl)
-                    .crossfade(true)
                     .build(),
                 contentDescription = imageContentDescription,
                 contentScale = ContentScale.Crop,
@@ -134,15 +135,18 @@ fun IllustRankCard(
     title: String? = null,
     pageCount: Int = 1,
     isFavorite: Boolean = false,
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
+    avatarImageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
 ) {
     IllustCard(
-        modifier, imageUrl, pageCount, isFavorite, imageContentDescription, onFavoriteClick
+        modifier, imageUrl, pageCount, isFavorite, imageContentDescription, onFavoriteClick, imageRequestBuilder
     ) {
         BoxWithConstraints(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .background(Color.DarkGray.copy(alpha = 0.3f))
                 .fillMaxWidth()
         ) {
             Column(
@@ -155,16 +159,17 @@ fun IllustRankCard(
                         text = title,
                         modifier = Modifier.padding(bottom = 4.dp),
                         fontSize = 14.sp,
-                        color = Color.White
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
+                        model = avatarImageRequestBuilder
                             .data(authorAvatar)
-                            .crossfade(true)
                             .build(),
                         contentDescription = imageContentDescription,
                         contentScale = ContentScale.Crop,
@@ -176,7 +181,9 @@ fun IllustRankCard(
                         text = author,
                         modifier = Modifier.padding(start = 4.dp),
                         fontSize = 10.sp,
-                        color = Color.White
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -193,6 +200,8 @@ fun MangaRankCard(
     title: String? = null,
     pageCount: Int = 1,
     isFavorite: Boolean = false,
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
+    avatarImageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
 ) {
@@ -204,6 +213,8 @@ fun MangaRankCard(
         title,
         pageCount,
         isFavorite,
+        imageRequestBuilder,
+        avatarImageRequestBuilder,
         imageContentDescription,
         onFavoriteClick
     )
@@ -220,6 +231,7 @@ fun IllustCard(
     isFavorite: Boolean = false,
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     extraContent: (@Composable ColumnScope.() -> Unit)? = null,
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
@@ -228,6 +240,7 @@ fun IllustCard(
         imageUrl = imageUrl,
         isFavorite = isFavorite,
         imageContentDescription = imageContentDescription,
+        imageRequestBuilder = imageRequestBuilder,
         onFavoriteClick = onFavoriteClick,
         extraContent = extraContent
     ) {
@@ -255,11 +268,12 @@ fun MangaCard(
     tags: List<String>? = null,
     favoriteCount: Int = 0,
     isFavorite: Boolean = false,
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
 ) {
     IllustCard(
-        modifier, imageUrl, pageCount, isFavorite, imageContentDescription, onFavoriteClick,
+        modifier, imageUrl, pageCount, isFavorite, imageContentDescription, onFavoriteClick, imageRequestBuilder,
         extraContent = {
             ListTile(
                 leading = {

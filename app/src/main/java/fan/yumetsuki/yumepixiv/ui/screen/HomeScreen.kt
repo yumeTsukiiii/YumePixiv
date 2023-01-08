@@ -3,10 +3,7 @@ package fan.yumetsuki.yumepixiv.ui.screen
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -17,20 +14,23 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import fan.yumetsuki.yumepixiv.ui.Route
+import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
 
 val home = Route(
     route = "home",
     label = "首页",
     icon = Icons.Default.Home,
-    content = { homeScreen() }
 )
 
-fun NavGraphBuilder.homeScreen() {
+fun NavGraphBuilder.homeScreen(illustViewModel: IllustViewModel? = null) {
     composable(home.route) {
-        Home()
+        Home(
+            illustViewModel = illustViewModel ?: hiltViewModel()
+        )
     }
 }
 
@@ -41,10 +41,12 @@ class TabItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Home() {
+fun Home(
+    illustViewModel: IllustViewModel = hiltViewModel()
+) {
 
     val tabs = listOf(
-        TabItem("插画") { IllustScreen(Modifier.fillMaxHeight()) },
+        TabItem("插画") { IllustScreen(Modifier.fillMaxSize(), illustViewModel) },
         TabItem("漫画") { MangaScreen() },
         TabItem("小说") { NovelScreen() }
     )

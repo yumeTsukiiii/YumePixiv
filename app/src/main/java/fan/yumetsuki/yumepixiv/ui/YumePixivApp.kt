@@ -13,7 +13,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import fan.yumetsuki.yumepixiv.ui.screen.dynamicMessage
+import fan.yumetsuki.yumepixiv.ui.screen.dynamicMessageScreen
 import fan.yumetsuki.yumepixiv.ui.screen.home
+import fan.yumetsuki.yumepixiv.ui.screen.homeScreen
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,9 +60,8 @@ fun YumePixivApp() {
         }
     ) {
         NavHost(navController = navController, startDestination = home.route, modifier = Modifier.padding(it)) {
-            appRoutes.forEach { navPage ->
-                navPage.content(this, navController)
-            }
+            homeScreen()
+            dynamicMessageScreen()
         }
     }
 

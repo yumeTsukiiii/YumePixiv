@@ -1,5 +1,7 @@
 [versions]
 androidxComposeBom = "2022.10.00"
+ktor = "2.2.2"
+hilt = "2.44"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
@@ -9,3 +11,10 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+io-ktor-ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+io-ktor-ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+io-ktor-ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+io-ktor-ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
+io-ktor-ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt"}
+com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt"}

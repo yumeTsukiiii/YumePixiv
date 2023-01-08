@@ -11,8 +11,7 @@ import fan.yumetsuki.yumepixiv.ui.Route
 val dynamicMessage = Route(
     route = "dynamicMessage",
     label = "动态",
-    icon = Icons.Default.Star,
-    content = { dynamicMessageScreen() }
+    icon = Icons.Default.Star
 )
 
 fun NavGraphBuilder.dynamicMessageScreen() {

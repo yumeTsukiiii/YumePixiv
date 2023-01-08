@@ -6,4 +6,6 @@ interface PixivRecommendApi {
 
     suspend fun getRecommendIllust(): RecommendResult
 
+    suspend fun nextPageRecommendIllust(nextUrl: String): RecommendResult
+
 }

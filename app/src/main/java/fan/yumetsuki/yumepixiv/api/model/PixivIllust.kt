@@ -1,73 +1,113 @@
 package fan.yumetsuki.yumepixiv.api.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class PixivIllust(
+    @SerialName("id")
     val id: Long,
+    @SerialName("title")
     val title: String,
-    /**
-     * TODO 类型 illust、manga、novel，最终确认下换成枚举 or StringRef
-     */
+    @SerialName("type")
     val type: String,
+    @SerialName("image_urls")
     val imageUrls: ImageUrl,
+    @SerialName("caption")
     val caption: String,
+    @SerialName("restrict")
     val restrict: Int,
+    @SerialName("user")
     val user: User,
+    @SerialName("tags")
     val tags: List<Tag>,
+    @SerialName("tools")
     val tools: List<String>,
-    /**
-     * TODO 看 Ktor 场景直接换成 Date？
-     */
+    @SerialName("create_date")
     val createDate: String,
+    @SerialName("page_count")
     val pageCount: Int,
+    @SerialName("width")
     val width: Int,
+    @SerialName("height")
     val height: Int,
+    @SerialName("sanity_level")
     val sanityLevel: Int,
+    @SerialName("x_restrict")
     val xRestrict: Int,
-    /**
-     * TODO 确认 series 的类型
-     * */
-    // val series
+    @SerialName("series")
+    val series: Series? = null,
+    @SerialName("meta_single_page")
     val metaSinglePage: MetaSinglePage,
+    @SerialName("meta_pages")
     val metaPages: List<MetaPage>,
+    @SerialName("total_view")
     val totalView: Int,
+    @SerialName("total_bookmarks")
     val totalBookMarks: Int,
+    @SerialName("is_bookmarked")
     val isBookMarked: Boolean,
+    @SerialName("visible")
     val visible: Boolean,
+    @SerialName("is_muted")
     val isMuted: Boolean,
-    /**
-     * TODO 看到底有哪些，是否需要换成枚举
-     */
+    @SerialName("illust_ai_type")
     val illustAiType: Int,
-    /**
-     * TODO 看到底有哪些，是否需要换成枚举
-     */
+    @SerialName("illust_book_style")
     val illustBookStyle: Int
 ) {
 
+    @Serializable
     data class ImageUrl(
-        val large: String?,
-        val medium: String?,
-        val squareMedium: String?,
-        val original: String?
+        @SerialName("large")
+        val large: String? = null,
+        @SerialName("medium")
+        val medium: String? = null,
+        @SerialName("square_medium")
+        val squareMedium: String? = null,
+        @SerialName("original")
+        val original: String? = null
     )
 
+    @Serializable
     data class User(
+        @SerialName("id")
         val id: Long,
+        @SerialName("name")
         val name: String,
+        @SerialName("account")
         val account: String,
+        @SerialName("profile_image_urls")
         val profileImageUrls: ImageUrl,
+        @SerialName("is_followed")
         val isFollowed: Boolean
     )
 
+    @Serializable
     data class Tag(
+        @SerialName("name")
         val name: String,
-        val translatedName: String
+        @SerialName("translated_name")
+        val translatedName: String? = null
     )
 
+    @Serializable
+    data class Series(
+        @SerialName("id")
+        val id: Long,
+        @SerialName("title")
+        val title: String
+    )
+
+    @Serializable
     data class MetaSinglePage(
-        val originalImageUrl: String?
+        @SerialName("original_image_url")
+        val originalImageUrl: String? = null
     )
 
+    @Serializable
     data class MetaPage(
+        @SerialName("image_urls")
         val imageUrls: ImageUrl
     )
 }

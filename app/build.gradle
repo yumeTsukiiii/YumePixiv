@@ -1,6 +1,9 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+    id 'com.google.dagger.hilt.android'
+    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
 android {
@@ -67,9 +70,28 @@ dependencies {
 
     // 图片库
     implementation("io.coil-kt:coil-compose:2.2.2")
+    // http 客户端
+    implementation(libs.io.ktor.ktor.client.core)
+    implementation(libs.io.ktor.ktor.client.android)
+    implementation(libs.io.ktor.ktor.client.content.negotiation)
+    implementation(libs.io.ktor.ktor.client.auth)
+    implementation(libs.io.ktor.ktor.serialization.kotlinx.json)
+
+    // DI
+    implementation(libs.com.google.dagger.hilt.android)
+    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
+    kapt(libs.com.google.dagger.hilt.compiler)
+
+    // JSON
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
 
+}
+
+// Hilt Allow references to generated code
+kapt {
+    correctErrorTypes true
 }

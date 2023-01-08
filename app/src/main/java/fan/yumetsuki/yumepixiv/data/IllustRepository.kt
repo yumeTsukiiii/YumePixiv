@@ -6,54 +6,78 @@ import fan.yumetsuki.yumepixiv.data.model.Illust
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-class IllustRepository(
+class IllustRepository constructor(
     private val pixivRecommendApi: PixivRecommendApi,
     private val coroutineScope: CoroutineScope
 ) {
 
-    private val _illusts = MutableSharedFlow<List<Illust>>()
-
-    val illusts: SharedFlow<List<Illust>> = _illusts.asSharedFlow()
+    private val lock = Mutex()
 
     private var nextIllustUrl: String? = null
 
-    suspend fun refreshIllust() {
+    private val _illusts = MutableSharedFlow<List<Illust>>()
+
+    private val _rankingIllusts = MutableSharedFlow<List<Illust>>()
+
+    val illusts = _illusts.asSharedFlow()
+
+    val rankingIllust = _rankingIllusts.asSharedFlow()
+
+    suspend fun refreshIllusts() {
         withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            val result = pixivRecommendApi.getRecommendIllust()
+            pixivRecommendApi.getRecommendIllust().also { result ->
+                _illusts.emit(result.illusts.toIllustModel())
+                _rankingIllusts.emit(result.rankingIllusts?.toIllustModel() ?: emptyList())
+            }
+        }.also { result ->
             nextIllustUrl = result.nextUrl
-            _illusts.emit(result.illusts.map { pixivIllustToModel(it) })
         }
     }
 
-    fun appendNextPageIllust() {
-
+    suspend fun nextPageIllust() {
+        val nextIllustUrl = lock.withLock {
+            this.nextIllustUrl
+        }
+        nextIllustUrl?.also { nextUrl ->
+            withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
+                pixivRecommendApi.nextPageRecommendIllust(nextUrl).also { result ->
+                    _illusts.emit(result.illusts.toIllustModel())
+                }
+            }.also { result ->
+                lock.withLock {
+                    this.nextIllustUrl = result.nextUrl
+                }
+            }
+        }
     }
 
-    private fun pixivIllustToModel(illust: PixivIllust): Illust {
+    private fun List<PixivIllust>.toIllustModel() = this.map { it.toIllustModel() }
+
+    private fun PixivIllust.toIllustModel(): Illust {
         return Illust(
-            id = illust.id,
-            title = illust.title,
-            coverPage = illust.imageUrls.run {
-                squareMedium ?: medium ?: TODO("默认图片")
+            id = id,
+            title = title,
+            coverPage = imageUrls.run {
+                squareMedium ?: medium
             },
-            user = illust.user.run {
+            user = user.run {
                 Illust.User(
                     id = id,
                     name = name,
                     account = account,
                     avatar = profileImageUrls.run {
-                        squareMedium ?: medium ?: TODO("默认图片")
+                        squareMedium ?: medium
                     },
                     isFollowed = isFollowed
                 )
             },
-            pageCount = illust.pageCount,
-            metaPages = illust.metaPages.map { metaPage ->
+            pageCount = pageCount,
+            metaPages = metaPages.map { metaPage ->
                 metaPage.imageUrls.run {
                     Illust.Image(
                         original = original,
@@ -63,9 +87,9 @@ class IllustRepository(
                     )
                 }
             },
-            totalView = illust.totalView,
-            totalBookMarks = illust.totalBookMarks,
-            isBookMarked = illust.isBookMarked
+            totalView = totalView,
+            totalBookMarks = totalBookMarks,
+            isBookMarked = isBookMarked,
         )
     }
 
