@@ -1,12 +1,9 @@
-package fan.yumetsuki.yumepixiv.api
+package fan.yumetsuki.yumepixiv.network
 
-import android.annotation.SuppressLint
-import fan.yumetsuki.yumepixiv.YumePixivApplication
-import fan.yumetsuki.yumepixiv.api.interceptor.HashInterceptor
-import fan.yumetsuki.yumepixiv.api.interceptor.KtorHttpSendInterceptor
-import fan.yumetsuki.yumepixiv.api.interceptor.TokenInterceptor
+import fan.yumetsuki.yumepixiv.network.interceptor.HashInterceptor
+import fan.yumetsuki.yumepixiv.network.interceptor.TokenInterceptor
+import fan.yumetsuki.yumepixiv.data.AppRepository
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.*
@@ -17,11 +14,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import java.math.BigInteger
-import java.security.MessageDigest
-import java.text.SimpleDateFormat
-import java.util.Calendar
 
 object PixivHttpHeaders {
 
@@ -92,24 +84,32 @@ fun <T: HttpClientEngineConfig> HttpClientConfig<T>.installDefaultRequest(baseUr
     }
 }
 
-val hashInterceptor: KtorHttpSendInterceptor
-    get() = HashInterceptor()
+fun hashInterceptor(): HashInterceptor {
+    return HashInterceptor()
+}
 
-val tokenInterceptor: KtorHttpSendInterceptor
-    get() = TokenInterceptor(
-        YumePixivApplication.appRepository
-    )
+fun tokenInterceptor(
+    appRepository: AppRepository
+): TokenInterceptor {
+    return TokenInterceptor(appRepository)
+}
 
-val oauthClient
-    get() = HttpClient(Android) {
+fun oauthClient(
+    hashInterceptor: HashInterceptor
+): HttpClient {
+    return HttpClient(Android) {
         installJson()
         installDefaultRequest(PixivBaseUrls.OAuth, PixivHosts.OAuth)
     }.apply {
         plugin(HttpSend).intercept(hashInterceptor)
     }
+}
 
-val appApiHttpClient
-    get() = HttpClient(Android) {
+fun appApiHttpClient(
+    hashInterceptor: HashInterceptor,
+    tokenInterceptor: TokenInterceptor
+): HttpClient {
+    return HttpClient(Android) {
         installJson()
         installDefaultRequest(PixivBaseUrls.AppApiV1, PixivHosts.AppApi)
         install(Auth) {
@@ -129,3 +129,4 @@ val appApiHttpClient
             intercept(tokenInterceptor)
         }
     }
+}

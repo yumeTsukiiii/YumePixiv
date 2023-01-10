@@ -1,7 +1,7 @@
 package fan.yumetsuki.yumepixiv.data
 
-import fan.yumetsuki.yumepixiv.api.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.api.model.PixivIllust
+import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.model.PixivIllust
 import fan.yumetsuki.yumepixiv.data.model.Illust
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

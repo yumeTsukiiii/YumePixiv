@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import fan.yumetsuki.yumepixiv.api.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
 import fan.yumetsuki.yumepixiv.data.IllustRepository
 import fan.yumetsuki.yumepixiv.data.model.Illust
 import kotlinx.coroutines.Dispatchers

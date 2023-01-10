@@ -5,12 +5,14 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import fan.yumetsuki.yumepixiv.api.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.api.appApiHttpClient
-import fan.yumetsuki.yumepixiv.api.impl.KtorPixivRecommendApi
-import fan.yumetsuki.yumepixiv.api.oauthClient
+import fan.yumetsuki.yumepixiv.network.*
+import fan.yumetsuki.yumepixiv.network.impl.KtorPixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.interceptor.HashInterceptor
+import fan.yumetsuki.yumepixiv.network.interceptor.TokenInterceptor
+import fan.yumetsuki.yumepixiv.data.AppRepository
 import io.ktor.client.*
 import javax.inject.Qualifier
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -37,15 +39,36 @@ annotation class AppApiHttpClient
 object KtorModule {
 
     @Provides
-    @OAuthHttpClient
-    fun provideOAuthHttpClient(): HttpClient {
-        return oauthClient
+    @Singleton
+    fun provideHashInterceptor(): HashInterceptor {
+        return hashInterceptor()
     }
 
     @Provides
+    @Singleton
+    fun provideTokenInterceptor(
+        appRepository: AppRepository
+    ): TokenInterceptor {
+        return tokenInterceptor(appRepository)
+    }
+
+    @Provides
+    @Singleton
+    @OAuthHttpClient
+    fun provideOAuthHttpClient(
+        hashInterceptor: HashInterceptor
+    ): HttpClient {
+        return oauthClient(hashInterceptor)
+    }
+
+    @Provides
+    @Singleton
     @AppApiHttpClient
-    fun provideAppApiHttpClient(): HttpClient {
-        return appApiHttpClient
+    fun provideAppApiHttpClient(
+        hashInterceptor: HashInterceptor,
+        tokenInterceptor: TokenInterceptor
+    ): HttpClient {
+        return appApiHttpClient(hashInterceptor, tokenInterceptor)
     }
 
 }

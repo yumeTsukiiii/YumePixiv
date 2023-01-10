@@ -1,7 +1,7 @@
-package fan.yumetsuki.yumepixiv.api.impl
+package fan.yumetsuki.yumepixiv.network.impl
 
-import fan.yumetsuki.yumepixiv.api.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.api.model.RecommendResult
+import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.model.RecommendResult
 import fan.yumetsuki.yumepixiv.di.AppApiHttpClient
 import io.ktor.client.*
 import io.ktor.client.call.*

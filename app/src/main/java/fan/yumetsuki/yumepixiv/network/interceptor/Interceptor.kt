@@ -1,4 +1,4 @@
-package fan.yumetsuki.yumepixiv.api.interceptor
+package fan.yumetsuki.yumepixiv.network.interceptor
 
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*

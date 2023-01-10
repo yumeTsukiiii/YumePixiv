@@ -1,7 +1,7 @@
-package fan.yumetsuki.yumepixiv.api.interceptor
+package fan.yumetsuki.yumepixiv.network.interceptor
 
 import android.annotation.SuppressLint
-import fan.yumetsuki.yumepixiv.api.PixivHttpHeaders
+import fan.yumetsuki.yumepixiv.network.PixivHttpHeaders
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*

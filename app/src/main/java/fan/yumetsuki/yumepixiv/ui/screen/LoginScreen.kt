@@ -13,6 +13,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import fan.yumetsuki.yumepixiv.viewmodels.LoginViewModel
 import java.security.MessageDigest
 import java.security.SecureRandom
 
@@ -35,7 +37,9 @@ fun generateCodeChallenge(codeVerifier: String): String {
 }
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(
+    viewModel: LoginViewModel = hiltViewModel()
+) {
 
     val context = LocalContext.current
 

@@ -1,4 +1,4 @@
-package fan.yumetsuki.yumepixiv.api.model
+package fan.yumetsuki.yumepixiv.network.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -1,6 +1,6 @@
-package fan.yumetsuki.yumepixiv.api
+package fan.yumetsuki.yumepixiv.network
 
-import fan.yumetsuki.yumepixiv.api.model.RecommendResult
+import fan.yumetsuki.yumepixiv.network.model.RecommendResult
 
 interface PixivRecommendApi {
 
