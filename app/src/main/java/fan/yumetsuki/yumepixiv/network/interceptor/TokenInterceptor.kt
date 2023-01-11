@@ -14,7 +14,7 @@ internal const val InvalidRefreshTokenError = "Invalid refresh token"
 @Suppress("MemberVisibilityCanBePrivate")
 class TokenInterceptor(
     private val appRepository: AppRepository
-): KtorHttpSendInterceptor {
+): HttpSendInterceptor {
     override suspend fun invoke(sender: Sender, request: HttpRequestBuilder): HttpClientCall {
         val pixivAccessToken = appRepository.accessToken
         if (pixivAccessToken != null) {

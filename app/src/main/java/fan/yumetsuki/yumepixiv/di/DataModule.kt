@@ -7,6 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import fan.yumetsuki.yumepixiv.data.AppRepository
+import fan.yumetsuki.yumepixiv.network.PixivAuthApi
 import javax.inject.Singleton
 
 @Module
@@ -16,10 +17,12 @@ object DataModule {
     @Provides
     @Singleton
     fun provideAppRepository(
-        application: Application
+        application: Application,
+        pixivAuthApi: PixivAuthApi
     ): AppRepository {
         return AppRepository(
-            application.getSharedPreferences("AppStorage", Context.MODE_PRIVATE)
+            application.getSharedPreferences("AppStorage", Context.MODE_PRIVATE),
+            pixivAuthApi
         )
     }
 

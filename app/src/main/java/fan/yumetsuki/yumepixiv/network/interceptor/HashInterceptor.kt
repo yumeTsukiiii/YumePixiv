@@ -30,7 +30,7 @@ fun currentIsoDateTime(): String = SimpleDateFormat(
 
 fun xClientHash(dateTime: String): String = hash(HashSalt + dateTime)
 
-class HashInterceptor : KtorHttpSendInterceptor {
+class HashInterceptor : HttpSendInterceptor {
 
     override suspend fun invoke(sender: Sender, request: HttpRequestBuilder): HttpClientCall {
         return sender.execute(

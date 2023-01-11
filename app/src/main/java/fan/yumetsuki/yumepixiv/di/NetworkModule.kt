@@ -10,6 +10,7 @@ import fan.yumetsuki.yumepixiv.network.impl.KtorPixivRecommendApi
 import fan.yumetsuki.yumepixiv.network.interceptor.HashInterceptor
 import fan.yumetsuki.yumepixiv.network.interceptor.TokenInterceptor
 import fan.yumetsuki.yumepixiv.data.AppRepository
+import fan.yumetsuki.yumepixiv.network.impl.KtorPixivAuthApi
 import io.ktor.client.*
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -23,7 +24,10 @@ abstract class NetworkModule {
         pixivRecommendApi: KtorPixivRecommendApi
     ): PixivRecommendApi
 
-
+    @Binds
+    abstract fun bindPixivAuthApi(
+        pixivAuthApi: KtorPixivAuthApi
+    ): PixivAuthApi
 }
 
 @Qualifier
