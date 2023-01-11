@@ -1,4 +1,4 @@
-package fan.yumetsuki.yumepixiv.ui.screen
+package fan.yumetsuki.yumepixiv.ui.screen.main.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import fan.yumetsuki.yumepixiv.ui.Route
+import fan.yumetsuki.yumepixiv.ui.screen.Route
 import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
 
 val home = Route(

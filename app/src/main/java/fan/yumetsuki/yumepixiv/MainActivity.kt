@@ -13,16 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import dagger.hilt.android.AndroidEntryPoint
 import fan.yumetsuki.yumepixiv.ui.YumePixivApp
-import fan.yumetsuki.yumepixiv.ui.screen.LoginScreen
+import fan.yumetsuki.yumepixiv.ui.screen.login.LoginScreen
 import fan.yumetsuki.yumepixiv.ui.theme.YumePixivTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        println("OpenUrl: MainActivity onCreate")
-        Toast.makeText(this, "OpenUrl: MainActivity onCreate", Toast.LENGTH_SHORT).show()
 
         setContent {
             YumePixivTheme {
@@ -31,8 +28,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-//                    YumePixivApp()
-                    LoginScreen()
+                    YumePixivApp()
                 }
             }
         }

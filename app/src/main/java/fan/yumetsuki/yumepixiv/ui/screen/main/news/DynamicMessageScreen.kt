@@ -1,4 +1,4 @@
-package fan.yumetsuki.yumepixiv.ui.screen
+package fan.yumetsuki.yumepixiv.ui.screen.main.news
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -6,16 +6,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import fan.yumetsuki.yumepixiv.ui.Route
+import fan.yumetsuki.yumepixiv.ui.screen.Route
 
-val dynamicMessage = Route(
-    route = "dynamicMessage",
+val news = Route(
+    route = "news",
     label = "动态",
     icon = Icons.Default.Star
 )
 
 fun NavGraphBuilder.dynamicMessageScreen() {
-    composable(dynamicMessage.route) {
+    composable(news.route) {
         DynamicMessage()
     }
 }

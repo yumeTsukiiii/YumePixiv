@@ -1,4 +1,4 @@
-package fan.yumetsuki.yumepixiv.ui.screen
+package fan.yumetsuki.yumepixiv.ui.screen.main.home
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
