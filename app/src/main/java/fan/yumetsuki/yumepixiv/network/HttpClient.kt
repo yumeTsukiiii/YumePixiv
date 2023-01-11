@@ -125,8 +125,8 @@ fun appApiHttpClient(
         }
     }.apply {
         plugin(HttpSend).apply {
-            intercept(hashInterceptor)
             intercept(tokenInterceptor)
+            intercept(hashInterceptor)
         }
     }
 }

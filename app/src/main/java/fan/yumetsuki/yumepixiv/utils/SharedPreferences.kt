@@ -7,11 +7,11 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 @Suppress("UNCHECKED_CAST")
-class SharedPreferencesDelegate<T: Any>(
-    private val valueType: KClass<T>,
+class SharedPreferencesDelegate<T>(
+    private val valueType: KClass<*>,
     private val sharedPreferences: SharedPreferences,
     private val key: String,
-    private val defaultValue: T? = null
+    private val defaultValue: T
 ) : ReadWriteProperty<Any, T> {
 
     override fun getValue(thisRef: Any, property: KProperty<*>): T {
@@ -38,4 +38,34 @@ class SharedPreferencesDelegate<T: Any>(
         }
     }
 
+}
+
+@Suppress("unused")
+fun SharedPreferences.string(key: String, defaultValue: String = ""): SharedPreferencesDelegate<String> {
+    return SharedPreferencesDelegate(String::class, this, key, defaultValue)
+}
+
+@Suppress("unused")
+fun SharedPreferences.stringOrNull(key: String, defaultValue: String? = null): SharedPreferencesDelegate<String?> {
+    return SharedPreferencesDelegate(String::class, this, key, defaultValue)
+}
+
+@Suppress("unused")
+fun SharedPreferences.int(key: String, defaultValue: Int = -1): SharedPreferencesDelegate<Int> {
+    return SharedPreferencesDelegate(Int::class, this, key, defaultValue)
+}
+
+@Suppress("unused")
+fun SharedPreferences.float(key: String, defaultValue: Float = -1f): SharedPreferencesDelegate<Float> {
+    return SharedPreferencesDelegate(Int::class, this, key, defaultValue)
+}
+
+@Suppress("unused")
+fun SharedPreferences.double(key: String, defaultValue: Double = -1.0): SharedPreferencesDelegate<Double> {
+    return SharedPreferencesDelegate(Int::class, this, key, defaultValue)
+}
+
+@Suppress("unused")
+fun SharedPreferences.boolean(key: String, defaultValue: Boolean = false): SharedPreferencesDelegate<Boolean> {
+    return SharedPreferencesDelegate(Int::class, this, key, defaultValue)
 }
