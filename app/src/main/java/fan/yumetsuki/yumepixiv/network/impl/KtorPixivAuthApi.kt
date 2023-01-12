@@ -5,9 +5,7 @@ import fan.yumetsuki.yumepixiv.di.OAuthHttpClient
 import fan.yumetsuki.yumepixiv.network.PixivAuthApi
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import javax.inject.Inject
 
@@ -46,7 +44,7 @@ class KtorPixivAuthApi @Inject constructor(
         clientSecret: String,
         includePolicy: Boolean
     ): PixivOAuthTokenInfo {
-        val response = httpClient.submitForm(
+        return httpClient.submitForm(
             "auth/token",
             formParameters = Parameters.build {
                 append(GrantType, grantType)
@@ -55,8 +53,7 @@ class KtorPixivAuthApi @Inject constructor(
                 append(IncludePolicy, "$includePolicy")
                 append(RefreshToken, refreshToken)
             }
-        )
-        return response.body()
+        ).body()
     }
 
     companion object {

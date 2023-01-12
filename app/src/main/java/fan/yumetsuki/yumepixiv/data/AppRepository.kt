@@ -64,7 +64,7 @@ class AppRepository(
         val tokenResult = withContext(Dispatchers.IO) {
             pixivAuthApi.oauthLogin(
                 pkce.codeVerifier, code,
-                GrantType, RedirectUri, ClientId, ClientSecret, IncludePolicy
+                GrantTypeAuthorizationCode, RedirectUri, ClientId, ClientSecret, IncludePolicy
             )
         }
         token = PixivToken(tokenResult.accessToken, tokenResult.refreshToken)
@@ -74,7 +74,7 @@ class AppRepository(
         refreshToken: String
     ) {
         val tokenResult = withContext(Dispatchers.IO) {
-            pixivAuthApi.refreshToken(refreshToken, GrantType, ClientId, ClientSecret, IncludePolicy)
+            pixivAuthApi.refreshToken(refreshToken, GrantTypeRefreshToken, ClientId, ClientSecret, IncludePolicy)
         }
         token = PixivToken(tokenResult.accessToken, tokenResult.refreshToken)
     }
@@ -94,7 +94,9 @@ class AppRepository(
 
         const val RefreshToken = "refreshToken"
 
-        const val GrantType = "authorization_code"
+        const val GrantTypeAuthorizationCode = "authorization_code"
+
+        const val GrantTypeRefreshToken = "refresh_token"
 
         const val RedirectUri = "https://app-api.pixiv.net/web/v1/users/auth/pixiv/callback"
 

@@ -1,12 +1,18 @@
 package fan.yumetsuki.yumepixiv.network.interceptor
 
 import fan.yumetsuki.yumepixiv.data.AppRepository
+import fan.yumetsuki.yumepixiv.utils.asText
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.api.*
+import io.ktor.client.plugins.observer.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.util.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.charsets.*
+import io.ktor.utils.io.core.*
 
 internal const val OAuthProcessTokenError = "Error occurred at the OAuth process"
 
@@ -26,26 +32,29 @@ class TokenInterceptor(
         val pixivToken = appRepository.token ?: throw PixivUnAuthorizedException()
         request.header(HttpHeaders.Authorization, "Bearer ${pixivToken.accessToken}")
         val originalCall = sender.execute(request)
-        return if (needRefreshToken && isUnauthorized(originalCall.save().response)) {
+        val originalBody = originalCall.response.bodyAsChannel().toByteArray()
+        return if (needRefreshToken && isUnauthorized(originalCall.response, originalBody)) {
             // 认证是不 ok 的，就去刷 refreshToken
             appRepository.refreshToken(pixivToken.refreshToken)
             internalInvoke(sender, request, false)
         } else {
             // 认证是 ok 的，直接返回 originalCall
-            originalCall
+            // body 只能读取一次，因此需要读一份出来，下一次用拷贝的数据传递
+            originalCall.wrapWithContent(ByteReadChannel(originalBody))
         }
     }
 
-    internal suspend fun isUnauthorized(httpResponse: HttpResponse): Boolean {
+    internal fun isUnauthorized(httpResponse: HttpResponse, originalBody: ByteArray): Boolean {
         if (httpResponse.status == HttpStatusCode.Unauthorized) {
             return true
         }
-        val bodyText = httpResponse.bodyAsText()
+        val bodyText = originalBody.asText(httpResponse)
         if (bodyText.isEmpty()) {
             return true
         }
         return bodyText.contains(OAuthProcessTokenError) || bodyText.contains(InvalidRefreshTokenError)
     }
+
 }
 
 class PixivUnAuthorizedException : Exception(

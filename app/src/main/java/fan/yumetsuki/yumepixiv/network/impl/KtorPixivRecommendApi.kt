@@ -6,7 +6,6 @@ import fan.yumetsuki.yumepixiv.di.AppApiHttpClient
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import javax.inject.Inject
 
 class KtorPixivRecommendApi @Inject constructor(
@@ -18,11 +17,7 @@ class KtorPixivRecommendApi @Inject constructor(
             parameter("filter", "for_android")
             parameter("include_ranking_illusts", true)
             parameter("include_privacy_policy", true)
-        }.run {
-            val body = bodyAsText(Charsets.UTF_8)
-            println("HttpResponse: $body")
-            body()
-        }
+        }.body()
     }
 
     override suspend fun nextPageRecommendIllust(nextUrl: String): RecommendResult {
