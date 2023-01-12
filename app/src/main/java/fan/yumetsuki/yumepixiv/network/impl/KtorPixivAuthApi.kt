@@ -15,7 +15,7 @@ class KtorPixivAuthApi @Inject constructor(
     @OAuthHttpClient private val httpClient: HttpClient
 ): PixivAuthApi {
 
-    override suspend fun refreshToken(
+    override suspend fun oauthLogin(
         codeVerifier: String,
         code: String,
         grantType: String,
@@ -36,8 +36,26 @@ class KtorPixivAuthApi @Inject constructor(
                 append(IncludePolicy, "$includePolicy")
             }
         )
-        val bodyText = response.bodyAsText()
-        println("bodyResponse: $bodyText")
+        return response.body()
+    }
+
+    override suspend fun refreshToken(
+        refreshToken: String,
+        grantType: String,
+        clientId: String,
+        clientSecret: String,
+        includePolicy: Boolean
+    ): PixivOAuthTokenInfo {
+        val response = httpClient.submitForm(
+            "auth/token",
+            formParameters = Parameters.build {
+                append(GrantType, grantType)
+                append(ClientId, clientId)
+                append(ClientSecret, clientSecret)
+                append(IncludePolicy, "$includePolicy")
+                append(RefreshToken, refreshToken)
+            }
+        )
         return response.body()
     }
 
@@ -48,6 +66,7 @@ class KtorPixivAuthApi @Inject constructor(
         const val RedirectUri = "redirect_uri"
         const val ClientId = "client_id"
         const val ClientSecret = "client_secret"
-        const val IncludePolicy = "includePolicy"
+        const val IncludePolicy = "include_policy"
+        const val RefreshToken = "refresh_token"
     }
 }

@@ -58,14 +58,23 @@ class AppRepository(
             }
         }
 
-    suspend fun refreshToken(
+    suspend fun oauthLogin(
         code: String
     ) {
         val tokenResult = withContext(Dispatchers.IO) {
-            pixivAuthApi.refreshToken(
+            pixivAuthApi.oauthLogin(
                 pkce.codeVerifier, code,
                 GrantType, RedirectUri, ClientId, ClientSecret, IncludePolicy
             )
+        }
+        token = PixivToken(tokenResult.accessToken, tokenResult.refreshToken)
+    }
+
+    suspend fun refreshToken(
+        refreshToken: String
+    ) {
+        val tokenResult = withContext(Dispatchers.IO) {
+            pixivAuthApi.refreshToken(refreshToken, GrantType, ClientId, ClientSecret, IncludePolicy)
         }
         token = PixivToken(tokenResult.accessToken, tokenResult.refreshToken)
     }

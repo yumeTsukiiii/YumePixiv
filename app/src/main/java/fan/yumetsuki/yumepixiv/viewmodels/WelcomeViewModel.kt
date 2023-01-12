@@ -12,18 +12,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @Suppress("MemberVisibilityCanBePrivate")
 @HiltViewModel
-class LoginViewModel @Inject constructor(
+class WelcomeViewModel @Inject constructor(
     private val appRepository: AppRepository
 ): ViewModel() {
 
     private val _uiState = MutableStateFlow(
         UiState(
-            isRefreshingToken = false,
-            isTokenUpdated = false
+            isRefreshingToken = true,
+            isTokenExisted = false
         )
     )
 
@@ -36,33 +37,25 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Main) {
             appRepository.oauthLogin(code)
             _uiState.update {
-                UiState(isRefreshingToken = false, isTokenUpdated = true)
+                UiState(isRefreshingToken = false, isTokenExisted = appRepository.token != null)
             }
         }
     }
 
-    fun jumpToLogin(context: Context) {
-        val loginUrl = generateLoginUrl(
-            appRepository.pkce.codeChallenge
-        )
-        context.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse(loginUrl))
-        )
+    fun checkTokenExisted() {
+        viewModelScope.launch(Dispatchers.Main) {
+            val token = withContext(Dispatchers.IO) {
+                appRepository.token
+            }
+            _uiState.update { oldState ->
+                oldState.copy(isRefreshingToken = false, isTokenExisted = token != null)
+            }
+        }
     }
 
     data class UiState(
         val isRefreshingToken: Boolean,
-        val isTokenUpdated: Boolean
+        val isTokenExisted: Boolean
     )
-
-    companion object {
-
-        internal const val LoginUrlPrefix = "https://app-api.pixiv.net/web/v1/login?code_challenge="
-
-        internal const val LoginUrlSuffix = "&code_challenge_method=S256&client=pixiv-android"
-
-        internal fun generateLoginUrl(code_challenge: String) = "$LoginUrlPrefix$code_challenge$LoginUrlSuffix"
-
-    }
 
 }

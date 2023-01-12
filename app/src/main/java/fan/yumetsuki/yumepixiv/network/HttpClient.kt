@@ -7,8 +7,6 @@ import io.ktor.client.*
 import io.ktor.client.engine.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -112,17 +110,6 @@ fun appApiHttpClient(
     return HttpClient(Android) {
         installJson()
         installDefaultRequest(PixivBaseUrls.AppApiV1, PixivHosts.AppApi)
-        install(Auth) {
-            bearer {
-                loadTokens {
-                    // TODO 获取 access token 和 refresh token，不是很标准，不用 Auth 模块了，直接拦截器
-                    BearerTokens(
-                        "",
-                        ""
-                    )
-                }
-            }
-        }
     }.apply {
         plugin(HttpSend).apply {
             intercept(tokenInterceptor)
