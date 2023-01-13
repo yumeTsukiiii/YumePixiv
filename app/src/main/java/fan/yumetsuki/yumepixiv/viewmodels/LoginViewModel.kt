@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fan.yumetsuki.yumepixiv.data.AppRepository
+import fan.yumetsuki.yumepixiv.data.IllustRepository
+import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,26 +19,27 @@ import javax.inject.Inject
 @Suppress("MemberVisibilityCanBePrivate")
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val appRepository: AppRepository
+    private val appRepository: AppRepository,
+    appRecommendApi: PixivRecommendApi
 ): ViewModel() {
 
+    private val illustRepository = IllustRepository(appRecommendApi, viewModelScope)
+
     private val _uiState = MutableStateFlow(
-        UiState(
-            isRefreshingToken = false,
-            isTokenUpdated = false
-        )
+        UiState(workThroughImages = emptyList())
     )
 
     val uiState = _uiState.asStateFlow()
 
-    fun storeNewLoginToken(code: String) {
-        _uiState.update { oldState ->
-            oldState.copy(isRefreshingToken = true)
-        }
+    fun requestWorkThroughIllusts() {
         viewModelScope.launch(Dispatchers.Main) {
-            appRepository.oauthLogin(code)
+            val illusts = runCatching {
+                illustRepository.getWalkthroughIllusts()
+            }.getOrNull()
             _uiState.update {
-                UiState(isRefreshingToken = false, isTokenUpdated = true)
+                UiState(
+                    workThroughImages = illusts?.map { it.coverPage!! }
+                )
             }
         }
     }
@@ -51,8 +54,7 @@ class LoginViewModel @Inject constructor(
     }
 
     data class UiState(
-        val isRefreshingToken: Boolean,
-        val isTokenUpdated: Boolean
+        val workThroughImages: List<String>?
     )
 
     companion object {

@@ -3,6 +3,7 @@ package fan.yumetsuki.yumepixiv.data
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
 import fan.yumetsuki.yumepixiv.network.model.PixivIllust
 import fan.yumetsuki.yumepixiv.data.model.Illust
+import fan.yumetsuki.yumepixiv.network.model.IllustType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,12 +31,18 @@ class IllustRepository constructor(
 
     suspend fun refreshIllusts() {
         withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.getRecommendIllust().also { result ->
+            pixivRecommendApi.getRecommendIllusts().also { result ->
                 _illusts.emit(result.illusts.toIllustModel())
                 _rankingIllusts.emit(result.rankingIllusts?.toIllustModel() ?: emptyList())
             }
         }.also { result ->
             nextIllustUrl = result.nextUrl
+        }
+    }
+
+    suspend fun getWalkthroughIllusts(): List<Illust> {
+        return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
+            pixivRecommendApi.getWalkThroughIllust().illusts.toIllustModel()
         }
     }
 
@@ -45,7 +52,7 @@ class IllustRepository constructor(
         }
         nextIllustUrl?.also { nextUrl ->
             withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-                pixivRecommendApi.nextPageRecommendIllust(nextUrl).also { result ->
+                pixivRecommendApi.nextPageRecommendIllusts(nextUrl).also { result ->
                     _illusts.emit(result.illusts.toIllustModel())
                 }
             }.also { result ->
@@ -56,14 +63,16 @@ class IllustRepository constructor(
         }
     }
 
-    private fun List<PixivIllust>.toIllustModel() = this.map { it.toIllustModel() }
+    private fun List<PixivIllust>.toIllustModel() = this.filter {
+        it.type == IllustType.Illust
+    }.map { it.toIllustModel() }
 
     private fun PixivIllust.toIllustModel(): Illust {
         return Illust(
             id = id,
             title = title,
             coverPage = imageUrls.run {
-                squareMedium ?: medium
+                squareMedium ?: medium ?: large ?: original
             },
             user = user.run {
                 Illust.User(
@@ -71,7 +80,7 @@ class IllustRepository constructor(
                     name = name,
                     account = account,
                     avatar = profileImageUrls.run {
-                        squareMedium ?: medium
+                        squareMedium ?: medium ?: large ?: original
                     },
                     isFollowed = isFollowed
                 )

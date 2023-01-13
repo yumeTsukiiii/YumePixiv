@@ -43,6 +43,8 @@ object PixivBaseUrls {
 
 }
 
+val authWhiteUrlParts = listOf("walkthrough")
+
 fun <T: HttpClientEngineConfig> HttpClientConfig<T>.installJson() {
     install(ContentNegotiation) {
         json(
@@ -89,7 +91,7 @@ fun hashInterceptor(): HashInterceptor {
 fun tokenInterceptor(
     appRepository: AppRepository
 ): TokenInterceptor {
-    return TokenInterceptor(appRepository)
+    return TokenInterceptor(appRepository, authWhiteUrlParts)
 }
 
 fun oauthClient(
@@ -110,6 +112,9 @@ fun appApiHttpClient(
     return HttpClient(Android) {
         installJson()
         installDefaultRequest(PixivBaseUrls.AppApiV1, PixivHosts.AppApi)
+        install(HttpTimeout) {
+            requestTimeoutMillis = 5000
+        }
     }.apply {
         plugin(HttpSend).apply {
             intercept(tokenInterceptor)

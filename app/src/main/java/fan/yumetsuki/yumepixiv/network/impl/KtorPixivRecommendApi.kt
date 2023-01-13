@@ -3,6 +3,7 @@ package fan.yumetsuki.yumepixiv.network.impl
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
 import fan.yumetsuki.yumepixiv.network.model.RecommendResult
 import fan.yumetsuki.yumepixiv.di.AppApiHttpClient
+import fan.yumetsuki.yumepixiv.network.model.WalkThroughResult
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -12,7 +13,7 @@ class KtorPixivRecommendApi @Inject constructor(
     @AppApiHttpClient private val httpClient: HttpClient
 ): PixivRecommendApi {
 
-    override suspend fun getRecommendIllust(): RecommendResult {
+    override suspend fun getRecommendIllusts(): RecommendResult {
         return httpClient.get("illust/recommended") {
             parameter("filter", "for_android")
             parameter("include_ranking_illusts", true)
@@ -20,7 +21,11 @@ class KtorPixivRecommendApi @Inject constructor(
         }.body()
     }
 
-    override suspend fun nextPageRecommendIllust(nextUrl: String): RecommendResult {
+    override suspend fun getWalkThroughIllust(): WalkThroughResult {
+        return httpClient.get("walkthrough/illusts").body()
+    }
+
+    override suspend fun nextPageRecommendIllusts(nextUrl: String): RecommendResult {
         TODO("Not yet implemented")
     }
 

@@ -8,7 +8,7 @@ data class RecommendResult(
     @SerialName("illusts")
     val illusts: List<PixivIllust>,
     @SerialName("ranking_illusts")
-    val rankingIllusts: List<PixivIllust>? = null,
+    val rankingIllusts: List<RankingIllust>? = null,
     @SerialName("contest_exists")
     val contestExists: Boolean,
     @SerialName("privacy_policy")

@@ -1,5 +1,6 @@
 package fan.yumetsuki.yumepixiv.network.model
 
+import androidx.annotation.StringDef
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -10,6 +11,7 @@ data class PixivIllust(
     @SerialName("title")
     val title: String,
     @SerialName("type")
+    @IllustType
     val type: String,
     @SerialName("image_urls")
     val imageUrls: ImageUrl,
@@ -110,6 +112,16 @@ data class PixivIllust(
         @SerialName("image_urls")
         val imageUrls: ImageUrl
     )
+}
+
+@StringDef(IllustType.Illust, IllustType.Manga)
+annotation class IllustType {
+
+    companion object {
+        const val Illust = "illust"
+        const val Manga = "manga"
+    }
+
 }
 
 typealias RankingIllust = PixivIllust

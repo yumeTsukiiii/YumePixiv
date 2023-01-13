@@ -20,7 +20,8 @@ internal const val InvalidRefreshTokenError = "Invalid refresh token"
 
 @Suppress("MemberVisibilityCanBePrivate")
 class TokenInterceptor(
-    private val appRepository: AppRepository
+    private val appRepository: AppRepository,
+    private val authWhiteUrlParts: List<String> = listOf()
 ): HttpSendInterceptor {
 
     override suspend fun invoke(sender: Sender, request: HttpRequestBuilder): HttpClientCall {
@@ -28,6 +29,9 @@ class TokenInterceptor(
     }
 
     internal suspend fun internalInvoke(sender: Sender, request: HttpRequestBuilder, needRefreshToken: Boolean): HttpClientCall {
+        if (authWhiteUrlParts.any { request.url.buildString().contains(it) }) {
+            return sender.execute(request)
+        }
         // refreshToken 不存在，直接需要重新登录，外部捕捉异常，基本逻辑上不会走到这里
         val pixivToken = appRepository.token ?: throw PixivUnAuthorizedException()
         request.header(HttpHeaders.Authorization, "Bearer ${pixivToken.accessToken}")

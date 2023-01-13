@@ -45,11 +45,13 @@ fun Home(
     illustViewModel: IllustViewModel = hiltViewModel()
 ) {
 
-    val tabs = listOf(
-        TabItem("插画") { IllustScreen(Modifier.fillMaxSize(), illustViewModel) },
-        TabItem("漫画") { MangaScreen() },
-        TabItem("小说") { NovelScreen() }
-    )
+    val tabs = rememberSaveable {
+        listOf(
+            TabItem("插画") { IllustScreen(Modifier.fillMaxSize(), illustViewModel) },
+            TabItem("漫画") { MangaScreen() },
+            TabItem("小说") { NovelScreen() }
+        )
+    }
 
     // navigation 切换需要使用 saveable
     var selectedTabIndex by rememberSaveable {
