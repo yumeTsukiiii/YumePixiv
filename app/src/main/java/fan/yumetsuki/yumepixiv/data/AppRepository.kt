@@ -1,6 +1,8 @@
 package fan.yumetsuki.yumepixiv.data
 
 import android.content.SharedPreferences
+import fan.yumetsuki.yumepixiv.data.model.PKCE
+import fan.yumetsuki.yumepixiv.data.model.PixivToken
 import fan.yumetsuki.yumepixiv.network.PixivAuthApi
 import fan.yumetsuki.yumepixiv.utils.generateCodeChallenge
 import fan.yumetsuki.yumepixiv.utils.generateCodeVerifier
@@ -78,16 +80,6 @@ class AppRepository(
         }
         token = PixivToken(tokenResult.accessToken, tokenResult.refreshToken)
     }
-
-    data class PixivToken(
-        val accessToken: String,
-        val refreshToken: String
-    )
-
-    data class PKCE(
-        val codeVerifier: String,
-        val codeChallenge: String
-    )
 
     companion object {
         const val AccessToken = "accessToken"
