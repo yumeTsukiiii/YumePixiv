@@ -15,21 +15,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.request.ImageRequest
 import fan.yumetsuki.yumepixiv.ui.components.IllustCard
 import fan.yumetsuki.yumepixiv.ui.components.IllustRankCard
 import fan.yumetsuki.yumepixiv.ui.components.nestedScrollable
+import fan.yumetsuki.yumepixiv.utils.pixivImageRequestBuilder
 import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
 
 @Composable
 fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
-    return ImageRequest.Builder(LocalContext.current)
-        .addHeader("Referer", "https://app-api.pixiv.net/")
-        // TODO 不要每次计算，给一个特定的 host 全局配置
-        .addHeader("Host", imageUrl.split("/")[2])
+    return pixivImageRequestBuilder(imageUrl = imageUrl)
         .crossfade(500)
 }
 
