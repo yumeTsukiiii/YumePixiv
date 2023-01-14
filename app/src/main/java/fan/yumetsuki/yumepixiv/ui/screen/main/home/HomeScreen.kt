@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +60,7 @@ fun Home(
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val saveableStateHolder = rememberSaveableStateHolder()
 
     Scaffold(
         topBar = {
@@ -103,7 +105,11 @@ fun Home(
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
-                        tabItem.content()
+                        // AnimatedVisibility 的 content invisible 会被 dispose 掉
+                        // 下次重组时，需要利用 saveable 恢复状态
+                        saveableStateHolder.SaveableStateProvider("YumePixivHomeTab-$index") {
+                            tabItem.content()
+                        }
                     }
                 }
             }

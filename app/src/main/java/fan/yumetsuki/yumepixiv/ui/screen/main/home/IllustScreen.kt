@@ -43,7 +43,7 @@ fun IllustScreen(
     val childScrollState = rememberLazyStaggeredGridState()
 
     LaunchedEffect(Unit) {
-        viewModel.refreshIllusts()
+        viewModel.refreshIllustsIfEmpty()
     }
 
     if (screenState.isLoading) {

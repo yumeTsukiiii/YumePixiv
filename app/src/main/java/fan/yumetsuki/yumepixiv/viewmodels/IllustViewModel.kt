@@ -43,6 +43,12 @@ class IllustViewModel @Inject constructor(
         }
     }
 
+    fun refreshIllustsIfEmpty() {
+        if (uiState.value.illusts.isEmpty()) {
+            refreshIllusts()
+        }
+    }
+
     private fun setupIllustFlow() {
         viewModelScope.launch {
             repository.illusts.collect {
