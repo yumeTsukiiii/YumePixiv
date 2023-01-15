@@ -26,7 +26,7 @@ class KtorPixivRecommendApi @Inject constructor(
     }
 
     override suspend fun nextPageRecommendIllusts(nextUrl: String): RecommendResult {
-        TODO("Not yet implemented")
+        return httpClient.get(nextUrl).body()
     }
 
 }

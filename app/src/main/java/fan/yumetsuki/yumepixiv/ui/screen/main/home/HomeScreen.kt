@@ -15,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -85,7 +86,7 @@ fun Home(
     ) { paddingValues ->
 
         Column(modifier = Modifier.padding(paddingValues)) {
-            TabRow(selectedTabIndex) {
+            TabRow(selectedTabIndex, modifier = Modifier.zIndex(1f)) {
                 tabs.forEachIndexed { index, route ->
                     Tab(
                         selected = index == selectedTabIndex,

@@ -12,16 +12,19 @@ data class RecommendResult(
     @SerialName("contest_exists")
     val contestExists: Boolean,
     @SerialName("privacy_policy")
-    val privacyPolicy: PrivacyPolicy,
+    val privacyPolicy: PrivacyPolicy? = null,
     @SerialName("next_url")
     val nextUrl: String
 ) {
 
     @Serializable
     data class PrivacyPolicy(
-        val version: String,
-        val message: String,
-        val url: String
+        @SerialName("version")
+        val version: String? = null,
+        @SerialName("message")
+        val message: String? = null,
+        @SerialName("url")
+        val url: String? = null
     )
 
 }

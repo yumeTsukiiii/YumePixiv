@@ -22,7 +22,12 @@ class IllustViewModel @Inject constructor(
     private val repository = IllustRepository(pixivRecommendApi, viewModelScope)
 
     private val _uiState = MutableStateFlow(
-        UiState(true, emptyList(), emptyList())
+        UiState(
+            isReLoading = true,
+            isLoadMore = false,
+            illusts = emptyList(),
+            rankingIllust = emptyList()
+        )
     )
 
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -34,11 +39,11 @@ class IllustViewModel @Inject constructor(
     fun refreshIllusts() {
         viewModelScope.launch(Dispatchers.Main) {
             _uiState.update {
-                UiState(isLoading = true, emptyList(), emptyList())
+                UiState(isReLoading = true, isLoadMore = false, emptyList(), emptyList())
             }
             repository.refreshIllusts()
             _uiState.update {
-                it.copy(isLoading = false)
+                it.copy(isReLoading = false)
             }
         }
     }
@@ -46,6 +51,21 @@ class IllustViewModel @Inject constructor(
     fun refreshIllustsIfEmpty() {
         if (uiState.value.illusts.isEmpty()) {
             refreshIllusts()
+        }
+    }
+
+    fun nextPageIllust() {
+        if (uiState.value.isLoadMore) {
+            return
+        }
+        viewModelScope.launch(Dispatchers.Main) {
+            _uiState.update { oldState ->
+                oldState.copy(isLoadMore = true)
+            }
+            repository.nextPageIllust()
+            _uiState.update { oldState ->
+                oldState.copy(isLoadMore = false)
+            }
         }
     }
 
@@ -91,7 +111,7 @@ class IllustViewModel @Inject constructor(
             imageUrl = coverPage,
             pageCount = pageCount,
             isFavorite = isBookMarked,
-            height = (150..250).random().dp
+            height = (250..350).random().dp
         )
     }
 
@@ -108,7 +128,8 @@ class IllustViewModel @Inject constructor(
 
     @Immutable
     data class UiState(
-        val isLoading: Boolean,
+        val isReLoading: Boolean,
+        val isLoadMore: Boolean,
         val illusts: List<IllustState>,
         val rankingIllust: List<RankingIllustState>
     ) {
