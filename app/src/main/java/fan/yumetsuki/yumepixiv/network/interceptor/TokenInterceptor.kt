@@ -34,7 +34,7 @@ class TokenInterceptor(
         }
         // refreshToken 不存在，直接需要重新登录，外部捕捉异常，基本逻辑上不会走到这里
         val pixivToken = appRepository.token ?: throw PixivUnAuthorizedException()
-        request.header(HttpHeaders.Authorization, "Bearer ${pixivToken.accessToken}")
+        request.headers[HttpHeaders.Authorization] = "Bearer ${pixivToken.accessToken}"
         val originalCall = sender.execute(request)
         val originalBody = originalCall.response.bodyAsChannel().toByteArray()
         return if (needRefreshToken && isUnauthorized(originalCall.response, originalBody)) {
