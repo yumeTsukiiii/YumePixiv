@@ -41,13 +41,7 @@ fun IllustScreen(
 
     val parentScrollState = rememberScrollState()
     val childScrollState = rememberLazyStaggeredGridState()
-    val contentScrollableState = rememberNestedScrollableState(
-        parentScrollState = parentScrollState,
-        childScrollState = childScrollState
-    ) {
-        childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
-    }
-    val refreshLayoutState = rememberRefreshLayoutState(contentScrollableState = contentScrollableState)
+    val refreshLayoutState = rememberRefreshLayoutState(parentScrollState)
 
     LaunchedEffect(Unit) {
         viewModel.refreshIllustsIfEmpty()
@@ -61,13 +55,13 @@ fun IllustScreen(
         childScrollState.layoutInfo.visibleItemsInfo.size,
         childScrollState.layoutInfo.totalItemsCount
     ) {
-        if (
-            childScrollState.layoutInfo.visibleItemsInfo.any {
-                it.index == childScrollState.layoutInfo.totalItemsCount - childScrollState.layoutInfo.visibleItemsInfo.size
-            }
-        ) {
-            viewModel.nextPageIllust()
-        }
+//        if (
+//            childScrollState.layoutInfo.visibleItemsInfo.any {
+//                it.index == childScrollState.layoutInfo.totalItemsCount - childScrollState.layoutInfo.visibleItemsInfo.size
+//            }
+//        ) {
+//            viewModel.nextPageIllust()
+//        }
     }
 
     LaunchedEffect(screenState.isLoadMore) {
@@ -101,17 +95,13 @@ fun IllustScreen(
                 }
             },
         ) {
-            BoxWithConstraints(
-                modifier = modifier.nestedScrollable(
-                    state = contentScrollableState,
-                    enabled = false,
-                    orientation = Orientation.Vertical
-                )
-            ) {
+            BoxWithConstraints {
 
                 Column(
                     modifier = Modifier
-                        .verticalScroll(parentScrollState, enabled = false)
+                        .nestedVerticalScroll(parentScrollState, isChildReachTop = {
+                            childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
+                        })
                         .wrapContentHeight(
                             align = Alignment.Top,
                             unbounded = true
@@ -175,7 +165,6 @@ fun IllustScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.height(this@BoxWithConstraints.maxHeight),
                             state = childScrollState,
-                            userScrollEnabled = false
                         ) {
                             items(screenState.illusts) { illust ->
                                 IllustCard(
@@ -189,6 +178,9 @@ fun IllustScreen(
                     }
                 }
             }
+
+
         }
+
     }
 }
