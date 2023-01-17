@@ -85,7 +85,7 @@ fun IllustScreen(
         RefreshLayout(
             isReachTop = { false },
             isReachBottom = {
-                childScrollState.isVerticalReachBottom()
+                childScrollState.isVerticalReachBottom(2)
             },
             state = refreshLayoutState,
             modifier = Modifier.fillMaxSize(),

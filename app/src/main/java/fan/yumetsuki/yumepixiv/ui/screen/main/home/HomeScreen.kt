@@ -82,7 +82,7 @@ fun Home(
                 scrollBehavior = scrollBehavior
             )
         },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+//        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
 
         Column(modifier = Modifier.padding(paddingValues)) {

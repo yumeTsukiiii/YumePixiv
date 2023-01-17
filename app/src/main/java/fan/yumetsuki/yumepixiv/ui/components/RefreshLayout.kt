@@ -1,16 +1,10 @@
 package fan.yumetsuki.yumepixiv.ui.components
 
-import androidx.compose.animation.core.AnimationState
-import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.animateDecay
-import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,13 +20,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import fan.yumetsuki.yumepixiv.ui.foundation.detectVerticalDragGestures
+import fan.yumetsuki.yumepixiv.ui.foundation.detectVerticalDragGesturesIgnoreConsumed
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
+import kotlin.math.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -43,6 +34,8 @@ fun RefreshLayout(
     modifier: Modifier = Modifier,
     header: (@Composable BoxScope.() -> Unit)? = null,
     footer: (@Composable BoxScope.() -> Unit)? = null,
+    flingBehavior: FlingBehavior? = null,
+    // TODO 支持 overscroll
     overscrollEffect: OverscrollEffect = ScrollableDefaults.overscrollEffect(),
     content: @Composable () -> Unit
 ) {
@@ -57,7 +50,6 @@ fun RefreshLayout(
         mutableStateOf(0)
     }
 
-    val contentScrollableState = state.contentScrollableState
     var contentOffset by state.contentOffset as MutableState<Int>
 
     LaunchedEffect(hasFooter, hasHeader, contentOffset) {
@@ -68,141 +60,70 @@ fun RefreshLayout(
         }
     }
 
-    val fling = ScrollableDefaults.flingBehavior()
+    val fling = flingBehavior ?: ScrollableDefaults.flingBehavior()
     val coroutineScope = rememberCoroutineScope()
-
-    suspend fun AwaitPointerEventScope.awaitFirstDownOnPass(
-        pass: PointerEventPass,
-        requireUnconsumed: Boolean
-    ): PointerInputChange {
-        var event: PointerEvent
-        do {
-            event = awaitPointerEvent(pass)
-        } while (
-            !event.changes.all {
-                if (requireUnconsumed) it.changedToDown() else it.changedToDownIgnoreConsumed()
-            }
-        )
-        return event.changes[0]
-    }
 
     Box(
         modifier = modifier
-            .pointerInput(hasFooter, hasHeader) {
-                awaitPointerEventScope {
-                    val down = awaitFirstDownOnPass(pass = PointerEventPass.Initial, requireUnconsumed = true)
-                    var change =
-                        awaitVerticalTouchSlopOrCancellation(down.id) { change, over ->
-                            println("SelfDragUp: ${change.positionChange().y}")
-                        }
-                    while (change != null && change.pressed) {
-                        // TODO 扒出来原来，删掉 isConsumed 的判断，这里即使子节点消费了也需要监听，
-                        //   相当于 dispatchTouchEvent 的流程，但并不拦截，反而是 onTouchEvent 的 up 流程，但事件自身不能拦截消费了
-                        change = awaitVerticalDragOrCancellation(change.id)
-                        if (change != null && change.pressed) {
-                            println("SelfDrag: ${change.positionChange().y}")
-                        }
+            .nestedScroll(object : NestedScrollConnection {
+                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                    println("TestDelta: RefreshLayout preScroll $available")
+                    if (contentOffset != 0) {
+                        println("TestRefreshLayout: intercept ${available}; isReachBottom: ${isReachBottom()}")
+                        return available
                     }
+                    return super.onPreScroll(available, source)
                 }
 
-                detectVerticalDragGestures(
-                    onVerticalDrag = { _, delta ->
-                        println("GestureDetect: $delta")
-//                        if (!(hasFooter || hasHeader)) {
-//                            return@detectVerticalDragGestures
-//                        }
-//                        if (delta < 0 && isReachBottom() && hasFooter) {
-//                            contentOffset =
-//                                max(-footerHeight, (contentOffset + delta).roundToInt())
-//                        } else if (delta > 0 && isReachTop() && hasHeader) {
-//                            contentOffset =
-//                                min(headerHeight, (contentOffset + delta).roundToInt())
-//                        }
-                    }
-                )
-            }
-            /*.draggable(
-                state = rememberDraggableState { delta ->
-                    if (!(hasFooter || hasHeader)) {
-                        return@rememberDraggableState
-                    }
-                    if (delta < 0 && isReachBottom() && hasFooter) {
-                        contentOffset =
-                            max(-footerHeight, (contentOffset + delta).roundToInt())
-                    } else if (delta > 0 && isReachTop() && hasHeader) {
-                        contentOffset =
-                            min(headerHeight, (contentOffset + delta).roundToInt())
-                    }
-                },
-                orientation = Orientation.Vertical,
-                onDragStopped = { velocity ->
+                override suspend fun onPreFling(available: Velocity): Velocity {
                     val scope = object : ScrollScope {
                         override fun scrollBy(pixels: Float): Float {
-                            if (!isReachBottom()) {
-                                return pixels
+                            if (isReachTop()) {
+                                val newContentOffset = (contentOffset + pixels)
+                                    .coerceIn(0f, headerHeight.toFloat())
+                                val consumed = newContentOffset - contentOffset
+                                contentOffset = newContentOffset.roundToInt()
+                                return consumed
                             }
-                            val newContentOffset =
-                                max(-footerHeight.toFloat(), contentOffset + pixels)
-                            val consumed = newContentOffset - contentOffset
-                            contentOffset = newContentOffset.roundToInt()
-                            return consumed
+                            if (isReachBottom()) {
+                                val newContentOffset = (contentOffset + pixels)
+                                    .coerceIn(-footerHeight.toFloat(), 0f)
+                                val consumed = newContentOffset - contentOffset
+                                contentOffset = newContentOffset.roundToInt()
+                                return consumed
+                            }
+                            return pixels
                         }
                     }
-                    with(scope) {
-                        with(fling) {
-                            coroutineScope.launch {
-                                performFling(velocity)
-                            }
+                    with(fling) {
+                        coroutineScope.launch {
+                            scope.performFling(available.y)
                         }
+                    }
+                    return super.onPreFling(available)
+                }
+            })
+            .pointerInput(hasFooter, hasHeader, isReachTop, isReachBottom) {
+                if (!hasFooter && !hasHeader) {
+                    return@pointerInput
+                }
+                detectVerticalDragGesturesIgnoreConsumed(
+//                    canDetectDrag = {
+//                        isReachTop() || isReachBottom()
+//                    }
+                ) { _, delta ->
+                    println("TestDelta: delta")
+                    if (isReachTop() && hasHeader) {
+                        contentOffset = (contentOffset + delta)
+                            .roundToInt()
+                            .coerceIn(0, headerHeight)
+                    } else if (isReachBottom() && hasFooter) {
+                        contentOffset = (contentOffset + delta)
+                            .roundToInt()
+                            .coerceIn(-footerHeight, 0)
                     }
                 }
-            )*//*.scrollable(
-                orientation = Orientation.Vertical,
-                overscrollEffect = overscrollEffect,
-                state = rememberScrollableState { delta ->
-                    val consumed = contentScrollableState.dispatchRawDelta(delta)
-                    val remain = delta - consumed
-                    // content 滚动容器全部消费，还可以滚动，需要继续分发
-                    if (remain == 0f && contentOffset == 0) {
-                        return@rememberScrollableState delta
-                    }
-                    if (!(hasFooter || hasHeader)) {
-                        return@rememberScrollableState 0f
-                    }
-                    if (delta < 0) {
-                        if (contentOffset > 0) {
-                            contentOffset = max(0, (contentOffset + delta).roundToInt())
-                            return@rememberScrollableState delta
-                        }
-                        if (!hasFooter || contentOffset == -footerHeight) {
-                            return@rememberScrollableState 0f
-                        }
-                        if (contentOffset < 0 || isReachBottom()) {
-                            contentOffset =
-                                max(-footerHeight, (contentOffset + delta).roundToInt())
-                        }
-                        return@rememberScrollableState if (contentOffset == -footerHeight) {
-                            0f
-                        } else {
-                            delta
-                        }
-                    } else {
-                        if (contentOffset < 0) {
-                            contentOffset = min(0, (contentOffset + delta).roundToInt())
-                            return@rememberScrollableState delta
-                        }
-                        if (!hasHeader || contentOffset == headerHeight) {
-                            return@rememberScrollableState 0f
-                        }
-                        if (contentOffset > 0 || isReachTop()) {
-                            contentOffset =
-                                min(headerHeight, (contentOffset + delta).roundToInt())
-                        }
-                        return@rememberScrollableState delta
-                    }
-                }
-            )
-            */
+            }
             .overscroll(overscrollEffect)
             .onSizeChanged {
                 overscrollEffect.isEnabled = it.height != 0
@@ -253,7 +174,7 @@ fun RefreshLayout(
 
 @Composable
 fun rememberRefreshLayoutState(
-    contentScrollableState: ScrollableState
+    contentScrollableState: ScrollableState? = null
 ): RefreshLayoutState {
     val contentOffsetState = remember {
         mutableStateOf(0)
@@ -269,8 +190,6 @@ fun rememberRefreshLayoutState(
 
 interface RefreshLayoutState {
 
-    val contentScrollableState: ScrollableState
-
     val contentOffset: State<Int>
 
     suspend fun closeFooter(scrollContent: Boolean = false)
@@ -279,7 +198,7 @@ interface RefreshLayoutState {
 
 class DefaultRefreshLayoutState(
     private val contentOffsetState: MutableState<Int>,
-    override val contentScrollableState: ScrollableState
+    private val contentScrollableState: ScrollableState? = null
 ): RefreshLayoutState {
 
     override val contentOffset: State<Int>
@@ -288,7 +207,7 @@ class DefaultRefreshLayoutState(
     override suspend fun closeFooter(scrollContent: Boolean) {
         if (contentOffsetState.value < 0) {
             if (scrollContent) {
-                contentScrollableState.scrollBy(contentOffsetState.value.toFloat())
+                contentScrollableState?.scrollBy(contentOffsetState.value.toFloat())
             }
             contentOffsetState.value = 0
         }
@@ -296,119 +215,96 @@ class DefaultRefreshLayoutState(
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun PreviewRefreshLayout() {
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val scrollState = rememberScrollState()
-    val childState = rememberLazyStaggeredGridState()
-    val flingBehavior = ScrollableDefaults.flingBehavior()
+    val contentScrollableState = rememberLazyListState()
 
-    val coroutineScope = rememberCoroutineScope()
+    RefreshLayout(isReachTop = {
+                               false
+//        contentScrollableState.firstVisibleItemIndex == 0 && contentScrollableState.firstVisibleItemScrollOffset == 0
+    }, isReachBottom = {
+          contentScrollableState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == contentScrollableState.layoutInfo.totalItemsCount - 1
+    }, state = rememberRefreshLayoutState(
+        contentScrollableState = contentScrollableState
+    ), header = {
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .height(256.dp)
+            .background(Color.Red))
+    }, footer = {
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .height(256.dp)
+            .background(Color.Red))
+    }) {
 
-    val nestedCollection = remember(scrollState, childState) {
-        object : NestedScrollConnection {
+//        Column(modifier = Modifier.fillMaxSize()) {
+//
+//        }
 
-            override fun onPreScroll(
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                if (childState.firstVisibleItemIndex == 0 && childState.firstVisibleItemScrollOffset == 0 && available.y < 0) {
-                    return if (scrollState.value < scrollState.maxValue) {
-                        coroutineScope.launch {
-                            scrollState.scrollBy(-available.y)
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier
+                .nestedVerticalScroll(
+                    state = rememberScrollState(),
+                    isChildReachTop = {
+                        contentScrollableState.firstVisibleItemIndex == 0 && contentScrollableState.firstVisibleItemScrollOffset == 0
+                    })
+                .fillMaxWidth()
+                .wrapContentHeight(unbounded = true)) {
+
+                Box(modifier = Modifier.height(64.dp).fillMaxWidth().background(Color.Red))
+
+                LazyColumn(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(this@BoxWithConstraints.maxHeight), state = contentScrollableState) {
+
+                    items(30) {
+                        Box(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)) {
+                            Text(text = "2333", modifier = Modifier.align(Alignment.Center))
                         }
-                        available
-                    } else {
-                        Offset.Zero
                     }
-                }
-                if (childState.firstVisibleItemIndex == 0 && childState.firstVisibleItemScrollOffset == 0 && available.y > 0) {
-                    coroutineScope.launch {
-                        scrollState.scrollBy(-available.y)
-                    }
-                    return available
-                }
-                return super.onPreScroll(available, source)
-            }
 
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (available.y != 0f && childState.firstVisibleItemIndex == 0 && childState.firstVisibleItemScrollOffset == 0) {
-                    coroutineScope.launch {
-                        scrollState.scroll {
-                            with(flingBehavior) {
-                                performFling(-available.y)
-                            }
-                        }
-                    }
                 }
-                return super.onPostFling(consumed, available)
             }
         }
+
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(text = "主页")
-                },
-                scrollBehavior = scrollBehavior
+}
+
+@Preview
+@Composable
+fun PreviewDragGesture() {
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .pointerInput(Unit) {
+            detectVerticalDragGestures(
+                requireUnconsumed = false,
+                onVerticalDrag = { _, delta ->
+                    println("GestureDetect: $delta")
+                }
             )
-        },
-//        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        }
     ) {
 
-        BoxWithConstraints(modifier = Modifier
-            .padding(it)
-            .fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
 
-            Column(
-                modifier = Modifier
-                    .nestedScroll(nestedCollection)
-                    .verticalScroll(
-                        state = scrollState,
-                        enabled = false
-                    )
-                    .wrapContentHeight(unbounded = true)
-            ) {
-
+            items(30) {
                 Box(modifier = Modifier
                     .fillMaxWidth()
-                    .height(96.dp)
-                    .background(Color.Red))
-
-                CompositionLocalProvider(LocalOverscrollConfiguration provides null) {
-                    LazyVerticalStaggeredGrid(
-                        state = childState,
-                        columns = StaggeredGridCells.Fixed(2),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(8.dp),
-                        modifier = Modifier.height(
-                            this@BoxWithConstraints.maxHeight
-                        )
-                    ) {
-
-                        items(30) { index ->
-
-                            Box(modifier = Modifier
-                                .fillMaxWidth()
-                                .height((300..350).random().dp)
-                            ) {
-                                Text(text = "$index", modifier = Modifier.align(Alignment.Center))
-                            }
-
-                        }
-
-                    }
+                    .height(64.dp)) {
+                    Text(text = "2333", modifier = Modifier.align(Alignment.Center))
                 }
             }
-            
+
         }
-        
+
     }
-    
+
 }
