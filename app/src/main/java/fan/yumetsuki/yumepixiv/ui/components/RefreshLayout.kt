@@ -20,110 +20,57 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import fan.yumetsuki.yumepixiv.ui.foundation.detectVerticalDragGestures
-import fan.yumetsuki.yumepixiv.ui.foundation.detectVerticalDragGesturesIgnoreConsumed
-import kotlinx.coroutines.launch
 import kotlin.math.*
+
+object RefreshLayoutDefaults {
+
+    @Composable
+    fun flingScrollBehaviour(
+        state: RefreshLayoutState = rememberRefreshLayoutState(),
+        isReachTop: () -> Boolean = { false },
+        isReachBottom: () -> Boolean = { false },
+        fling: FlingBehavior = ScrollableDefaults.flingBehavior()
+    ): RefreshLayoutScrollBehaviour {
+        return FlingScrollBehaviour(
+            state,
+            isReachTop,
+            isReachBottom,
+            fling
+        )
+    }
+
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RefreshLayout(
-    isReachTop: () -> Boolean,
-    isReachBottom: () -> Boolean,
-    state: RefreshLayoutState,
     modifier: Modifier = Modifier,
     header: (@Composable BoxScope.() -> Unit)? = null,
     footer: (@Composable BoxScope.() -> Unit)? = null,
-    flingBehavior: FlingBehavior? = null,
-    // TODO 支持 overscroll
+    scrollBehaviour: RefreshLayoutScrollBehaviour,
     overscrollEffect: OverscrollEffect = ScrollableDefaults.overscrollEffect(),
     content: @Composable () -> Unit
 ) {
     val hasFooter = footer != null
     val hasHeader = header != null
 
-    var footerHeight by remember {
-        mutableStateOf(0)
-    }
+    var footerHeight by scrollBehaviour.state.footerHeight
 
-    var headerHeight by remember {
-        mutableStateOf(0)
-    }
+    var headerHeight by scrollBehaviour.state.headerHeight
 
-    var contentOffset by state.contentOffset as MutableState<Int>
+    var contentOffset by scrollBehaviour.state.contentOffset
 
-    LaunchedEffect(hasFooter, hasHeader, contentOffset) {
-        if (!hasFooter && contentOffset < 0) {
+    LaunchedEffect(hasFooter, hasHeader, scrollBehaviour.state.showHeader, scrollBehaviour.state.showFooter, contentOffset) {
+        if ((!hasFooter || !scrollBehaviour.state.showFooter) && contentOffset < 0) {
             contentOffset = 0
-        } else if (!hasHeader && contentOffset > 0) {
+        } else if ((!hasHeader || !scrollBehaviour.state.showHeader) && contentOffset > 0) {
             contentOffset = 0
         }
     }
 
-    val fling = flingBehavior ?: ScrollableDefaults.flingBehavior()
-    val coroutineScope = rememberCoroutineScope()
-
     Box(
         modifier = modifier
-            .nestedScroll(object : NestedScrollConnection {
-                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    println("TestDelta: RefreshLayout preScroll $available")
-                    if (contentOffset != 0) {
-                        println("TestRefreshLayout: intercept ${available}; isReachBottom: ${isReachBottom()}")
-                        return available
-                    }
-                    return super.onPreScroll(available, source)
-                }
-
-                override suspend fun onPreFling(available: Velocity): Velocity {
-                    val scope = object : ScrollScope {
-                        override fun scrollBy(pixels: Float): Float {
-                            if (isReachTop()) {
-                                val newContentOffset = (contentOffset + pixels)
-                                    .coerceIn(0f, headerHeight.toFloat())
-                                val consumed = newContentOffset - contentOffset
-                                contentOffset = newContentOffset.roundToInt()
-                                return consumed
-                            }
-                            if (isReachBottom()) {
-                                val newContentOffset = (contentOffset + pixels)
-                                    .coerceIn(-footerHeight.toFloat(), 0f)
-                                val consumed = newContentOffset - contentOffset
-                                contentOffset = newContentOffset.roundToInt()
-                                return consumed
-                            }
-                            return pixels
-                        }
-                    }
-                    with(fling) {
-                        coroutineScope.launch {
-                            scope.performFling(available.y)
-                        }
-                    }
-                    return super.onPreFling(available)
-                }
-            })
-            .pointerInput(hasFooter, hasHeader, isReachTop, isReachBottom) {
-                if (!hasFooter && !hasHeader) {
-                    return@pointerInput
-                }
-                detectVerticalDragGesturesIgnoreConsumed(
-//                    canDetectDrag = {
-//                        isReachTop() || isReachBottom()
-//                    }
-                ) { _, delta ->
-                    println("TestDelta: delta")
-                    if (isReachTop() && hasHeader) {
-                        contentOffset = (contentOffset + delta)
-                            .roundToInt()
-                            .coerceIn(0, headerHeight)
-                    } else if (isReachBottom() && hasFooter) {
-                        contentOffset = (contentOffset + delta)
-                            .roundToInt()
-                            .coerceIn(-footerHeight, 0)
-                    }
-                }
-            }
+            .nestedScroll(scrollBehaviour.nestedScrollConnection)
             .overscroll(overscrollEffect)
             .onSizeChanged {
                 overscrollEffect.isEnabled = it.height != 0
@@ -174,45 +121,153 @@ fun RefreshLayout(
 
 @Composable
 fun rememberRefreshLayoutState(
-    contentScrollableState: ScrollableState? = null
+    showFooter: Boolean = true,
+    showHeader: Boolean = true
 ): RefreshLayoutState {
     val contentOffsetState = remember {
         mutableStateOf(0)
     }
 
-    return remember(contentScrollableState, contentOffsetState) {
+    val headerHeightState = remember {
+        mutableStateOf(0)
+    }
+
+    val footerHeightState = remember {
+        mutableStateOf(0)
+    }
+
+    return remember(contentOffsetState, showHeader, showFooter) {
         DefaultRefreshLayoutState(
             contentOffsetState,
-            contentScrollableState
+            headerHeightState,
+            footerHeightState,
+            showFooter,
+            showHeader
         )
     }
 }
 
 interface RefreshLayoutState {
 
-    val contentOffset: State<Int>
+    val contentOffset: MutableState<Int>
 
-    suspend fun closeFooter(scrollContent: Boolean = false)
+    var headerHeight: MutableState<Int>
+
+    var footerHeight: MutableState<Int>
+
+    val showFooter: Boolean
+
+    val showHeader: Boolean
 
 }
 
 class DefaultRefreshLayoutState(
-    private val contentOffsetState: MutableState<Int>,
-    private val contentScrollableState: ScrollableState? = null
-): RefreshLayoutState {
+    override val contentOffset: MutableState<Int>,
+    override var headerHeight: MutableState<Int>,
+    override var footerHeight: MutableState<Int>,
+    override val showFooter: Boolean,
+    override val showHeader: Boolean,
+): RefreshLayoutState
 
-    override val contentOffset: State<Int>
-        get() = contentOffsetState
+interface RefreshLayoutScrollBehaviour {
 
-    override suspend fun closeFooter(scrollContent: Boolean) {
-        if (contentOffsetState.value < 0) {
-            if (scrollContent) {
-                contentScrollableState?.scrollBy(contentOffsetState.value.toFloat())
+    val state: RefreshLayoutState
+
+    val nestedScrollConnection: NestedScrollConnection
+
+}
+
+class FlingScrollBehaviour(
+    override val state: RefreshLayoutState,
+    val isReachTop: () -> Boolean,
+    val isReachBottom: () -> Boolean,
+    val fling: FlingBehavior
+): RefreshLayoutScrollBehaviour, NestedScrollConnection {
+
+    override val nestedScrollConnection: NestedScrollConnection
+        get() = this
+
+    var contentOffset by state.contentOffset
+    var headerHeight by state.headerHeight
+    var footerHeight by state.footerHeight
+
+    var lastContentScrollScope: ScrollScope? = null
+
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        if (source == NestedScrollSource.Drag && contentOffset != 0) {
+            val consumed = scrollBy(available.y)
+            if (consumed != null) {
+                return available.copy(y = consumed)
             }
-            contentOffsetState.value = 0
         }
+        return super.onPreScroll(available, source)
     }
 
+    override fun onPostScroll(
+        consumed: Offset,
+        available: Offset,
+        source: NestedScrollSource
+    ): Offset {
+        if (source == NestedScrollSource.Drag) {
+            val consumedOffset = scrollBy(available.y)
+            if (consumedOffset != null) {
+                return available.copy(y = consumedOffset)
+            }
+        }
+        return super.onPostScroll(consumed, available, source)
+    }
+
+    override suspend fun onPreFling(available: Velocity): Velocity {
+        if (contentOffset != 0) {
+            return available.copy(y = available.y - performFling(available.y))
+        }
+        return super.onPreFling(available)
+    }
+
+    override suspend fun onPostFling(
+        consumed: Velocity,
+        available: Velocity
+    ): Velocity {
+        if (available.y != 0f && contentOffset == 0) {
+            return available.copy(y = available.y - performFling(initialVelocity = available.y))
+        }
+        return super.onPostFling(consumed, available)
+    }
+
+    internal fun scrollBy(delta: Float): Float? {
+        if (isReachTop() && state.showHeader) {
+            val newContentOffset = (contentOffset + delta)
+                .coerceIn(0f, headerHeight.toFloat())
+            val consumedOffset = newContentOffset - contentOffset
+            contentOffset = newContentOffset.roundToInt()
+            return consumedOffset
+        }
+        if (isReachBottom() && state.showFooter) {
+            val newContentOffset = (contentOffset + delta)
+                .coerceIn(-footerHeight.toFloat(), 0f)
+            val consumedOffset = newContentOffset - contentOffset
+            contentOffset = newContentOffset.roundToInt()
+            return consumedOffset
+        }
+        return null
+    }
+
+    internal suspend fun performFling(initialVelocity: Float): Float {
+        if (!state.showHeader && !state.showFooter) {
+            return initialVelocity
+        }
+        lastContentScrollScope = object : ScrollScope {
+            override fun scrollBy(pixels: Float): Float {
+                if (lastContentScrollScope != this) {
+                    return 0f
+                }
+                return this@FlingScrollBehaviour.scrollBy(pixels) ?: pixels
+            }
+        }
+        return with(fling) {
+            lastContentScrollScope!!.performFling(initialVelocity)
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -220,46 +275,58 @@ class DefaultRefreshLayoutState(
 @Composable
 fun PreviewRefreshLayout() {
 
-    val contentScrollableState = rememberLazyListState()
+    val parentScrollState = rememberScrollState()
+    val childScrollState = rememberLazyListState()
+    val nestedScrollableState = rememberNestedScrollableState(
+        parentScrollState = parentScrollState,
+        childScrollState = childScrollState
+    ) {
+        childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
+    }
 
-    RefreshLayout(isReachTop = {
-                               false
-//        contentScrollableState.firstVisibleItemIndex == 0 && contentScrollableState.firstVisibleItemScrollOffset == 0
-    }, isReachBottom = {
-          contentScrollableState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == contentScrollableState.layoutInfo.totalItemsCount - 1
-    }, state = rememberRefreshLayoutState(
-        contentScrollableState = contentScrollableState
-    ), header = {
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(256.dp)
-            .background(Color.Red))
-    }, footer = {
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(256.dp)
-            .background(Color.Red))
-    }) {
-
-//        Column(modifier = Modifier.fillMaxSize()) {
-//
-//        }
+    RefreshLayout(
+        scrollBehaviour = RefreshLayoutDefaults.flingScrollBehaviour(
+            isReachTop = {
+                false
+//          contentScrollableState.firstVisibleItemIndex == 0 && contentScrollableState.firstVisibleItemScrollOffset == 0
+            }, isReachBottom = {
+                childScrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == childScrollState.layoutInfo.totalItemsCount - 1
+            }, state = rememberRefreshLayoutState()
+        ),
+        header = {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(256.dp)
+                .background(Color.Red))
+        }, footer = {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(256.dp)
+                .background(Color.Red))
+        }
+    ) {
 
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier
-                .nestedVerticalScroll(
-                    state = rememberScrollState(),
-                    isChildReachTop = {
-                        contentScrollableState.firstVisibleItemIndex == 0 && contentScrollableState.firstVisibleItemScrollOffset == 0
-                    })
+                .nestedScrollable(
+                    nestedScrollableState = nestedScrollableState,
+                    orientation = Orientation.Vertical
+                )
+                .verticalScroll(parentScrollState, enabled = false)
                 .fillMaxWidth()
                 .wrapContentHeight(unbounded = true)) {
 
-                Box(modifier = Modifier.height(64.dp).fillMaxWidth().background(Color.Red))
-
-                LazyColumn(modifier = Modifier
+                Box(modifier = Modifier
+                    .height(64.dp)
                     .fillMaxWidth()
-                    .height(this@BoxWithConstraints.maxHeight), state = contentScrollableState) {
+                    .background(Color.Red))
+
+                LazyColumn(
+                    state = childScrollState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(this@BoxWithConstraints.maxHeight),
+                    userScrollEnabled = false) {
 
                     items(30) {
                         Box(modifier = Modifier
@@ -271,38 +338,6 @@ fun PreviewRefreshLayout() {
 
                 }
             }
-        }
-
-    }
-
-}
-
-@Preview
-@Composable
-fun PreviewDragGesture() {
-
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .pointerInput(Unit) {
-            detectVerticalDragGestures(
-                requireUnconsumed = false,
-                onVerticalDrag = { _, delta ->
-                    println("GestureDetect: $delta")
-                }
-            )
-        }
-    ) {
-
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-
-            items(30) {
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp)) {
-                    Text(text = "2333", modifier = Modifier.align(Alignment.Center))
-                }
-            }
-
         }
 
     }

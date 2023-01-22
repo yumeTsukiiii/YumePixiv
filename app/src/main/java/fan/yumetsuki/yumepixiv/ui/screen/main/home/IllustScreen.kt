@@ -3,6 +3,7 @@ package fan.yumetsuki.yumepixiv.ui.screen.main.home
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -39,9 +40,18 @@ fun IllustScreen(
 
     val screenState by viewModel.uiState.collectAsState()
 
+    val refreshLayoutState = rememberRefreshLayoutState(
+        showHeader = false,
+        showFooter = screenState.isLoadMore
+    )
     val parentScrollState = rememberScrollState()
     val childScrollState = rememberLazyStaggeredGridState()
-    val refreshLayoutState = rememberRefreshLayoutState(parentScrollState)
+    val nestedScrollableState = rememberNestedScrollableState(
+        parentScrollState = parentScrollState,
+        childScrollState = childScrollState
+    ) {
+        childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
+    }
 
     LaunchedEffect(Unit) {
         viewModel.refreshIllustsIfEmpty()
@@ -55,18 +65,22 @@ fun IllustScreen(
         childScrollState.layoutInfo.visibleItemsInfo.size,
         childScrollState.layoutInfo.totalItemsCount
     ) {
-//        if (
-//            childScrollState.layoutInfo.visibleItemsInfo.any {
-//                it.index == childScrollState.layoutInfo.totalItemsCount - childScrollState.layoutInfo.visibleItemsInfo.size
-//            }
-//        ) {
-//            viewModel.nextPageIllust()
-//        }
+        if (
+            childScrollState.layoutInfo.visibleItemsInfo.any {
+                it.index == childScrollState.layoutInfo.totalItemsCount - childScrollState.layoutInfo.visibleItemsInfo.size - 6
+            }
+        ) {
+            viewModel.nextPageIllust()
+        }
     }
 
     LaunchedEffect(screenState.isLoadMore) {
         if (!screenState.isLoadMore) {
-            refreshLayoutState.closeFooter(scrollContent = true)
+            if (refreshLayoutState.contentOffset.value != 0) {
+                // nested scrollBy 需要反方向处理
+                // 向上滑动到底，delta 是 负数; scrollBy 调用时，支持传递的 value 到 delta
+                nestedScrollableState.scrollBy(refreshLayoutState.contentOffset.value.toFloat())
+            }
         }
     }
 
@@ -83,11 +97,13 @@ fun IllustScreen(
         }
     } else {
         RefreshLayout(
-            isReachTop = { false },
-            isReachBottom = {
-                childScrollState.isVerticalReachBottom(2)
-            },
-            state = refreshLayoutState,
+            scrollBehaviour = RefreshLayoutDefaults.flingScrollBehaviour(
+                isReachTop = { false },
+                isReachBottom = {
+                    childScrollState.isVerticalReachBottom(2)
+                },
+                state = refreshLayoutState,
+            ),
             modifier = Modifier.fillMaxSize(),
             footer = {
                 LoadMore(modifier = Modifier.fillMaxWidth()) {
@@ -99,9 +115,14 @@ fun IllustScreen(
 
                 Column(
                     modifier = Modifier
-                        .nestedVerticalScroll(parentScrollState, isChildReachTop = {
-                            childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
-                        })
+                        .nestedScrollable(
+                            nestedScrollableState = nestedScrollableState,
+                            orientation = Orientation.Vertical
+                        )
+                        .verticalScroll(
+                            parentScrollState,
+                            enabled = false
+                        )
                         .wrapContentHeight(
                             align = Alignment.Top,
                             unbounded = true
@@ -165,6 +186,7 @@ fun IllustScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.height(this@BoxWithConstraints.maxHeight),
                             state = childScrollState,
+                            userScrollEnabled = false
                         ) {
                             items(screenState.illusts) { illust ->
                                 IllustCard(
