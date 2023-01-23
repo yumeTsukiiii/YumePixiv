@@ -39,7 +39,7 @@ object PixivBaseUrls {
 
     const val OAuth = "https://${PixivHosts.OAuth}/"
 
-    const val AppApiV1 = "https://${PixivHosts.AppApi}/v1/"
+    const val AppApiV1 = "https://${PixivHosts.AppApi}/"
 
 }
 

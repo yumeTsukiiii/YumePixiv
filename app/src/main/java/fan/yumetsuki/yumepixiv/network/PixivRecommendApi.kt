@@ -9,6 +9,10 @@ interface PixivRecommendApi {
 
     suspend fun getWalkThroughIllust(): WalkThroughResult
 
+    suspend fun addIllustBookMark(illustId: Long, restrict: String)
+
+    suspend fun deleteIllustBookMark(illustId: Long)
+
     suspend fun nextPageRecommendIllusts(nextUrl: String): RecommendResult
 
 }

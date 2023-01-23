@@ -30,6 +30,9 @@ class IllustViewModel @Inject constructor(
         )
     )
 
+    private val _illusts = repository.illusts
+    private val _rankingIllusts = repository.rankingIllust
+
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     init {
@@ -69,14 +72,43 @@ class IllustViewModel @Inject constructor(
         }
     }
 
+    fun changeIllustBookmark(index: Int) {
+        val chosenIllust = _uiState.value.illusts[index]
+        viewModelScope.launch {
+            _uiState.update { oldState ->
+                oldState.copy(
+                    illusts = oldState.illusts.toMutableList().apply {
+                        this[index] = chosenIllust.copy(isFavorite = !chosenIllust.isFavorite)
+                    }
+                )
+            }
+            try {
+                if (chosenIllust.isFavorite) {
+                    repository.deleteIllustBookMark(_illusts.value[index])
+                } else {
+                    repository.addIllustBookMark(_illusts.value[index])
+                }
+            } catch (e: Throwable) {
+                _uiState.update { oldState ->
+                    oldState.copy(
+                        illusts = oldState.illusts.toMutableList().apply {
+                            this[index] = chosenIllust.copy()
+                        }
+                    )
+                }
+                e.printStackTrace()
+            }
+        }
+    }
+
     private fun setupIllustFlow() {
         viewModelScope.launch {
-            repository.illusts.collect {
+            _illusts.collect {
                 onIllustsUpdate(it)
             }
         }
         viewModelScope.launch {
-            repository.rankingIllust.collect {
+            _rankingIllusts.collect {
                 onRankingIllustsUpdate(it)
             }
         }
@@ -85,7 +117,7 @@ class IllustViewModel @Inject constructor(
     private fun onIllustsUpdate(illusts: List<Illust>) {
         _uiState.update { oldState ->
             oldState.copy(
-                illusts = oldState.illusts + illusts.toIllustStates()
+                illusts = illusts.toIllustStates()
             )
         }
     }
@@ -111,7 +143,7 @@ class IllustViewModel @Inject constructor(
             imageUrl = coverPage,
             pageCount = pageCount,
             isFavorite = isBookMarked,
-            height = (250..350).random().dp
+            height = height.dp
         )
     }
 

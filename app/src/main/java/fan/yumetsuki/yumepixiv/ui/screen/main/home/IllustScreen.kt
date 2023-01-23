@@ -2,7 +2,6 @@ package fan.yumetsuki.yumepixiv.ui.screen.main.home
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,8 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.request.ImageRequest
@@ -162,7 +159,11 @@ fun IllustScreen(
                                     authorAvatar = rankingIllust.authorAvatar ?: TODO("默认图片"),
                                     imageRequestBuilder = imageRequestBuilder(rankingIllust.imageUrl),
                                     avatarImageRequestBuilder = imageRequestBuilder(rankingIllust.imageUrl),
-                                    modifier = Modifier.size(156.dp)
+                                    modifier = Modifier.size(156.dp),
+                                    isFavorite = rankingIllust.isFavorite,
+                                    onFavoriteClick = {
+
+                                    }
                                 )
                             }
                         }
@@ -188,12 +189,16 @@ fun IllustScreen(
                             state = childScrollState,
                             userScrollEnabled = false
                         ) {
-                            items(screenState.illusts) { illust ->
+                            itemsIndexed(screenState.illusts) { index, illust ->
                                 IllustCard(
                                     imageUrl = illust.imageUrl ?: TODO("默认图片"),
                                     pageCount = illust.pageCount,
                                     modifier = Modifier.height(illust.height),
-                                    imageRequestBuilder = imageRequestBuilder(illust.imageUrl)
+                                    imageRequestBuilder = imageRequestBuilder(illust.imageUrl),
+                                    isFavorite = illust.isFavorite,
+                                    onFavoriteClick = {
+                                        viewModel.changeIllustBookmark(index)
+                                    }
                                 )
                             }
                         }

@@ -13,6 +13,7 @@ data class Illust(
     val totalView: Int,
     val totalBookMarks: Int,
     val isBookMarked: Boolean,
+    val height: Int
 ) {
 
     data class User(
