@@ -43,7 +43,7 @@ class IllustViewModel @Inject constructor(
     fun reloadIllusts() {
         viewModelScope.launch(Dispatchers.Main) {
             _uiState.update {
-                UiState(isReLoading = true, isLoadMore = false, currentIllustPage = -1, emptyList(), emptyList())
+                it.copy(isReLoading = true, isLoadMore = false, currentIllustPage = -1)
             }
             repository.refreshIllusts()
             _uiState.update {
@@ -141,13 +141,22 @@ class IllustViewModel @Inject constructor(
             return
         }
         _uiState.update { oldState ->
-            oldState.copy(currentIllustPage = index)
+            oldState.copy(currentIllustPage = index, currentSelectIllusts = oldState.illusts)
+        }
+    }
+
+    fun openRankingIllustDetail(index: Int) {
+        if (index < 0 || index >=_uiState.value.illusts.size) {
+            return
+        }
+        _uiState.update { oldState ->
+            oldState.copy(currentIllustPage = index, currentSelectIllusts = oldState.rankingIllust)
         }
     }
 
     fun closeIllustDetail() {
         _uiState.update { oldState ->
-            oldState.copy(currentIllustPage = -1)
+            oldState.copy(currentIllustPage = -1, currentSelectIllusts = null)
         }
     }
 
@@ -191,14 +200,14 @@ class IllustViewModel @Inject constructor(
     }
 
     private fun List<Illust>.toIllustStates(): List<UiState.IllustState> {
-        return this.map { it.toIllustState() }
+        return this.map { it.toIllustState((250..350).random().dp) }
     }
 
-    private fun List<Illust>.toRankingIllustStates(): List<UiState.RankingIllustState> {
-        return this.map { it.toRankingIllustState() }
+    private fun List<Illust>.toRankingIllustStates(): List<UiState.IllustState> {
+        return this.map { it.toIllustState(156.dp) }
     }
 
-    private fun Illust.toIllustState(): UiState.IllustState {
+    private fun Illust.toIllustState(cardHeight: Dp): UiState.IllustState {
         return UiState.IllustState(
             title = title,
             caption = caption,
@@ -215,27 +224,7 @@ class IllustViewModel @Inject constructor(
             tags = tags.map { UiState.IllustTagState(it.name, it.translatedName) },
             width = width,
             height = height,
-            cardHeight = (250..350).random().dp
-        )
-    }
-
-    private fun Illust.toRankingIllustState(): UiState.RankingIllustState {
-        return UiState.RankingIllustState(
-            title = title,
-            caption = caption,
-            coverImageUrl = coverPage,
-            metaImages = metaPages.mapNotNull { it.url },
-            author = user.name,
-            authorAvatarUrl = user.avatar,
-            pageCount = pageCount,
-            isBookmark = isBookMarked,
-            totalViews = totalView,
-            totalBookmarks = totalBookmarks,
-            // TODO ISO String 转化为普通的时间，Java 8 工具类不可用，需要自己写
-            createDate = createDate,
-            tags = tags.map { IllustViewModel.UiState.IllustTagState(it.name, it.translatedName) },
-            width = width,
-            height = height,
+            cardHeight = cardHeight
         )
     }
 
@@ -245,7 +234,8 @@ class IllustViewModel @Inject constructor(
         val isLoadMore: Boolean,
         val currentIllustPage: Int,
         val illusts: List<IllustState>,
-        val rankingIllust: List<RankingIllustState>
+        val rankingIllust: List<IllustState>,
+        val currentSelectIllusts: List<IllustState>? = null,
     ) {
 
         data class IllustState(
@@ -270,26 +260,9 @@ class IllustViewModel @Inject constructor(
             val name: String,
             val translateName: String?
         )
-
-        data class RankingIllustState(
-            val title: String,
-            val caption: String,
-            val coverImageUrl: String?,
-            val metaImages: List<String>,
-            val author: String,
-            val authorAvatarUrl: String?,
-            val pageCount: Int,
-            val isBookmark: Boolean,
-            val totalViews: Int,
-            val totalBookmarks: Int,
-            val createDate: String,
-            val tags: List<IllustTagState>,
-            val width: Int,
-            val height: Int,
-        )
     }
 
 }
 
 val IllustViewModel.UiState.isOpenIllustDetail: Boolean
-    get() = !isReLoading && illusts.isNotEmpty() && currentIllustPage >= 0 && currentIllustPage < illusts.size
+    get() = !isReLoading && currentSelectIllusts != null && currentIllustPage >= 0 && currentIllustPage < illusts.size

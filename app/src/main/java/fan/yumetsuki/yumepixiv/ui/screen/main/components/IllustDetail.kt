@@ -61,6 +61,19 @@ data class IllustDetailTag(
     val translatedName: String?
 )
 
+data class IllustDetail(
+    val title: String,
+    val caption: String,
+    val images: List<IllustDetailImage>,
+    val author: String,
+    val authorAvatarUrl: String,
+    val isBookmark: Boolean,
+    val totalViews: Int,
+    val totalBookmark: Int,
+    val createDate: String,
+    val tags: List<IllustDetailTag>
+)
+
 @Composable
 private fun illustDetailImageRequestBuilder(imageUrl: String): ImageRequest.Builder {
     return pixivImageRequestBuilder(imageUrl = imageUrl)
@@ -120,16 +133,7 @@ fun AuthorListItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IllustDetail(
-    title: String,
-    caption: String,
-    images: List<IllustDetailImage>,
-    author: String,
-    authorAvatarUrl: String,
-    isBookmark: Boolean,
-    totalViews: Int,
-    totalBookmark: Int,
-    createDate: String,
-    tags: List<IllustDetailTag>,
+    illustDetail: IllustDetail,
     modifier: Modifier = Modifier,
     foldHeight: Dp = 124.dp,
     bottomSheetPadding: Dp = 64.dp,
@@ -157,9 +161,9 @@ fun IllustDetail(
                 BottomSheet {
 
                     AuthorListItem(
-                        author = author,
-                        authorAvatarUrl = authorAvatarUrl,
-                        createDate = createDate,
+                        author = illustDetail.author,
+                        authorAvatarUrl = illustDetail.authorAvatarUrl,
+                        createDate = illustDetail.createDate,
                     )
 
                     Column(
@@ -168,7 +172,7 @@ fun IllustDetail(
                             .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(text = title, style = MaterialTheme.typography.headlineMedium.merge(
+                        Text(text = illustDetail.title, style = MaterialTheme.typography.headlineMedium.merge(
                             LocalTextStyle.current
                         ))
 
@@ -177,19 +181,19 @@ fun IllustDetail(
                         ) {
                             TextButton(onClick = { /*TODO*/ }) {
                                 Icon(imageVector = Icons.Filled.Visibility, contentDescription = null)
-                                Text(text = "$totalViews 看过", modifier = Modifier.padding(start = ButtonDefaults.IconSpacing))
+                                Text(text = "${illustDetail.totalViews} 看过", modifier = Modifier.padding(start = ButtonDefaults.IconSpacing))
                             }
 
                             TextButton(onClick = { /*TODO*/ }) {
                                 Icon(imageVector = Icons.Filled.Favorite, contentDescription = null)
-                                Text(text = "$totalBookmark 收藏", modifier = Modifier.padding(start = ButtonDefaults.IconSpacing))
+                                Text(text = "${illustDetail.totalBookmark} 收藏", modifier = Modifier.padding(start = ButtonDefaults.IconSpacing))
                             }
                         }
 
                         FlowRow(
                             mainAxisSpacing = 8.dp
                         ) {
-                            tags.forEach { tag ->
+                            illustDetail.tags.forEach { tag ->
                                 AssistChip(
                                     onClick = { /*TODO*/ },
                                     label = {
@@ -203,7 +207,7 @@ fun IllustDetail(
 
                         Text(
                             text = spannableStringToAnnotatedString(
-                                HtmlCompat.fromHtml(caption, HtmlCompat.FROM_HTML_MODE_COMPACT),
+                                HtmlCompat.fromHtml(illustDetail.caption, HtmlCompat.FROM_HTML_MODE_COMPACT),
                                 density = density
                             ),
                             style = MaterialTheme.typography.bodyMedium.merge(
@@ -242,7 +246,7 @@ fun IllustDetail(
                 }
             }
         ) {
-            if (images.isEmpty()) {
+            if (illustDetail.images.isEmpty()) {
                 YumePixivTip(
                     text = "奇了怪了这个人都没图片啊喂",
                     modifier = Modifier
@@ -256,7 +260,7 @@ fun IllustDetail(
                         .padding(bottom = (foldHeight - 16.dp).coerceAtLeast(0.dp)),
                     verticalArrangement = Arrangement.Center
                 ) {
-                    items(images) { image ->
+                    items(illustDetail.images) { image ->
                         BoxWithConstraints {
                             SubcomposeAsyncImage(
                                 model = illustDetailImageRequestBuilder(imageUrl = image.url).build(),
