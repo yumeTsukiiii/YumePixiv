@@ -97,6 +97,8 @@ class AppRepository(
         const val ClientSecret = "lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj"
 
         const val IncludePolicy = true
+
+        const val AppStorage = "AppStorage"
     }
 
 }

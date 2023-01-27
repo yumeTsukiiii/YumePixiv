@@ -3,6 +3,7 @@ package fan.yumetsuki.yumepixiv.data.model
 data class Illust(
     val id: Long,
     val title: String,
+    val caption: String,
     /**
      * 插画推荐缩略图
      */
@@ -11,8 +12,11 @@ data class Illust(
     val pageCount: Int,
     val metaPages: List<Image>,
     val totalView: Int,
-    val totalBookMarks: Int,
+    val totalBookmarks: Int,
     val isBookMarked: Boolean,
+    val createDate: String,
+    val tags: List<Tag>,
+    val width: Int,
     val height: Int
 ) {
 
@@ -26,7 +30,7 @@ data class Illust(
 
     data class Tag(
         val name: String,
-        val translatedName: String
+        val translatedName: String?
     )
 
     data class Image(

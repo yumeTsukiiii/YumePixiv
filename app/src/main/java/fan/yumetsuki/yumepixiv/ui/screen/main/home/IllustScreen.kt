@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -14,21 +15,27 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.request.ImageRequest
 import fan.yumetsuki.yumepixiv.ui.components.*
 import fan.yumetsuki.yumepixiv.utils.pixivImageRequestBuilder
 import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
+import fan.yumetsuki.yumepixiv.viewmodels.isOpenIllustDetail
 
 @Composable
-fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
+private fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
     return pixivImageRequestBuilder(imageUrl = imageUrl)
         .crossfade(500)
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalComposeUiApi::class
+)
 @Composable
 fun IllustScreen(
     modifier: Modifier = Modifier,
@@ -49,22 +56,37 @@ fun IllustScreen(
     ) {
         childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
     }
+    val firstVisibleItemIndex by remember {
+        derivedStateOf {
+            childScrollState.firstVisibleItemIndex
+        }
+    }
+    val totalVisibleSize by remember {
+        derivedStateOf {
+            childScrollState.layoutInfo.visibleItemsInfo.size
+        }
+    }
+    val totalListSize by remember {
+        derivedStateOf {
+            childScrollState.layoutInfo.totalItemsCount
+        }
+    }
 
     LaunchedEffect(Unit) {
-        viewModel.refreshIllustsIfEmpty()
+        viewModel.reloadIllustsIfEmpty()
     }
 
     // TODO 抽离 StateRefreshLayout，封装 refresh 和 load 状态
     // TODO 添加 FloatActionButton 回到顶部
     // TODO 添加 showFooter / showHeader 能力，外部处于 load / refresh 状态时才允许显示，在 StateRefreshLayout 里做
     LaunchedEffect(
-        childScrollState.firstVisibleItemIndex,
-        childScrollState.layoutInfo.visibleItemsInfo.size,
-        childScrollState.layoutInfo.totalItemsCount
+        firstVisibleItemIndex,
+        totalVisibleSize,
+        totalListSize
     ) {
         if (
             childScrollState.layoutInfo.visibleItemsInfo.any {
-                it.index == childScrollState.layoutInfo.totalItemsCount - childScrollState.layoutInfo.visibleItemsInfo.size - 6
+                it.index == totalListSize - totalVisibleSize
             }
         ) {
             viewModel.nextPageIllust()
@@ -150,19 +172,19 @@ fun IllustScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(8.dp),
                         ) {
-                            items(screenState.rankingIllust) { rankingIllust ->
+                            itemsIndexed(screenState.rankingIllust) { index, rankingIllust ->
                                 IllustRankCard(
-                                    imageUrl = rankingIllust.imageUrl ?: TODO("默认图片"),
+                                    imageUrl = rankingIllust.coverImageUrl ?: TODO("默认图片"),
                                     author = rankingIllust.author,
                                     title = rankingIllust.title,
                                     pageCount = rankingIllust.pageCount,
-                                    authorAvatar = rankingIllust.authorAvatar ?: TODO("默认图片"),
-                                    imageRequestBuilder = imageRequestBuilder(rankingIllust.imageUrl),
-                                    avatarImageRequestBuilder = imageRequestBuilder(rankingIllust.imageUrl),
+                                    authorAvatar = rankingIllust.authorAvatarUrl ?: TODO("默认图片"),
+                                    imageRequestBuilder = imageRequestBuilder(rankingIllust.coverImageUrl),
+                                    avatarImageRequestBuilder = imageRequestBuilder(rankingIllust.authorAvatarUrl),
                                     modifier = Modifier.size(156.dp),
-                                    isFavorite = rankingIllust.isFavorite,
+                                    isFavorite = rankingIllust.isBookmark,
                                     onFavoriteClick = {
-
+                                        viewModel.changeRankingIllustBookmark(index)
                                     }
                                 )
                             }
@@ -191,13 +213,16 @@ fun IllustScreen(
                         ) {
                             itemsIndexed(screenState.illusts) { index, illust ->
                                 IllustCard(
-                                    imageUrl = illust.imageUrl ?: TODO("默认图片"),
+                                    imageUrl = illust.coverImageUrl ?: TODO("默认图片"),
                                     pageCount = illust.pageCount,
-                                    modifier = Modifier.height(illust.height),
-                                    imageRequestBuilder = imageRequestBuilder(illust.imageUrl),
-                                    isFavorite = illust.isFavorite,
+                                    modifier = Modifier.height(illust.cardHeight),
+                                    imageRequestBuilder = imageRequestBuilder(illust.coverImageUrl),
+                                    isFavorite = illust.isBookmark,
                                     onFavoriteClick = {
                                         viewModel.changeIllustBookmark(index)
+                                    },
+                                    onClick = {
+                                        viewModel.openIllustDetail(index)
                                     }
                                 )
                             }
@@ -205,9 +230,22 @@ fun IllustScreen(
                     }
                 }
             }
-
-
         }
 
+        if (screenState.isOpenIllustDetail) {
+            Dialog(
+                onDismissRequest = {
+                    viewModel.closeIllustDetail()
+                },
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    usePlatformDefaultWidth = false
+                )
+            ) {
+                IllustDetailScreen(
+                    viewModel = viewModel
+                )
+            }
+        }
     }
 }

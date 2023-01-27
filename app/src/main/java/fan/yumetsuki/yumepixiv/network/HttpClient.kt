@@ -113,7 +113,7 @@ fun appApiHttpClient(
         installJson()
         installDefaultRequest(PixivBaseUrls.AppApiV1, PixivHosts.AppApi)
         install(HttpTimeout) {
-            requestTimeoutMillis = 5000
+            requestTimeoutMillis = 10000
         }
     }.apply {
         plugin(HttpSend).apply {

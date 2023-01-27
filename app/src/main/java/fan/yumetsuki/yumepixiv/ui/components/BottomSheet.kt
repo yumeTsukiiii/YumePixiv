@@ -6,10 +6,15 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,9 +37,44 @@ fun rememberBottomSheetState(): BottomSheetState {
 }
 
 @Composable
+fun BottomSheetDragHandle(
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    shape: Shape = MaterialTheme.shapes.small
+) {
+    Box(
+        modifier = modifier.width(32.dp)
+            .height(4.dp)
+            .clip(shape)
+            .alpha(0.4f)
+            .background(color = color)
+    )
+}
+
+@Composable
+fun BottomSheet(
+    modifier: Modifier = Modifier,
+    showDragHandle: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = modifier
+    ) {
+        if (showDragHandle) {
+            BottomSheetDragHandle(
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+                    .padding(vertical = 22.dp)
+            )
+        }
+        content()
+    }
+}
+
+@Composable
 fun BottomSheetScaffold(
     // TODO foldHeight 默认值等抽象 Defaults
     foldHeight: Dp,
+    modifier: Modifier = Modifier,
     expandHeight: Dp = Dp.Infinity,
     bottomSheetState: BottomSheetState = rememberBottomSheetState(),
     density: Density = LocalDensity.current,
@@ -42,8 +82,16 @@ fun BottomSheetScaffold(
     content: @Composable BoxScope.() -> Unit
 ) {
 
-    var bottomSheetHeight by remember {
-        mutableStateOf(0)
+    var bottomSheetHeight by remember(expandHeight) {
+        mutableStateOf(
+            if (expandHeight == Dp.Infinity) {
+                0
+            } else {
+                with(density) {
+                    expandHeight.roundToPx()
+                }
+            }
+        )
     }
 
     val hidedHeight by remember(bottomSheetHeight, foldHeight) {
@@ -58,7 +106,14 @@ fun BottomSheetScaffold(
     }
 
     val bottomSheetOffset = remember {
-        Animatable(0f)
+        Animatable(
+            max(
+                0f,
+                bottomSheetHeight - with(density) {
+                    foldHeight.toPx()
+                }
+            )
+        )
     }
 
     var isDragging by remember {
@@ -79,12 +134,19 @@ fun BottomSheetScaffold(
         }
     }
 
-    Box {
+    BoxWithConstraints(
+        modifier = modifier
+    ) {
         content()
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .draggable(
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = bottomSheetOffset.value.roundToInt()
+                    )
+                }.draggable(
                     state = rememberDraggableState { delta ->
                         coroutineScope.launch {
                             bottomSheetOffset.snapTo(
@@ -103,24 +165,21 @@ fun BottomSheetScaffold(
                         } else if (velocity < -300f) {
                             bottomSheetState.isExpand = true
                         } else {
-                            bottomSheetState.isExpand = bottomSheetOffset.value < bottomSheetHeight / 2
+                            bottomSheetState.isExpand =
+                                bottomSheetOffset.value < bottomSheetHeight / 2
                         }
                         isDragging = false
                     },
                     orientation = Orientation.Vertical
                 )
-                .offset {
-                    IntOffset(x = 0, y = bottomSheetOffset.value.roundToInt())
-                }
                 .run {
                     if (expandHeight != Dp.Infinity) {
                         height(expandHeight)
                     } else {
-                        this
+                        onSizeChanged {
+                            bottomSheetHeight = it.height
+                        }
                     }
-                }
-                .onSizeChanged {
-                    bottomSheetHeight = it.height
                 }
         ) {
             bottomSheet()

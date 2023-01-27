@@ -1,8 +1,10 @@
 package fan.yumetsuki.yumepixiv.network.impl
 
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.network.model.RecommendResult
+import fan.yumetsuki.yumepixiv.network.model.IllustRecommendResult
 import fan.yumetsuki.yumepixiv.di.AppApiHttpClient
+import fan.yumetsuki.yumepixiv.network.model.MangaRecommendResult
+import fan.yumetsuki.yumepixiv.network.model.RelatedResult
 import fan.yumetsuki.yumepixiv.network.model.WalkThroughResult
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -15,16 +17,43 @@ class KtorPixivRecommendApi @Inject constructor(
     @AppApiHttpClient private val httpClient: HttpClient
 ): PixivRecommendApi {
 
-    override suspend fun getRecommendIllusts(): RecommendResult {
+    override suspend fun getRecommendIllusts(): IllustRecommendResult {
         return httpClient.get("v1/illust/recommended") {
-            parameter("filter", "for_android")
-            parameter("include_ranking_illusts", true)
-            parameter("include_privacy_policy", true)
+            parameter(Filter, ForAndroid)
+            parameter(IncludeRankingIllusts, true)
+            parameter(IncludePrivacyPolicy, true)
         }.body()
     }
 
     override suspend fun getWalkThroughIllust(): WalkThroughResult {
         return httpClient.get("v1/walkthrough/illusts").body()
+    }
+
+    override suspend fun relatedIllusts(illustId: Long): RelatedResult {
+        return httpClient.get("v2/illust/related") {
+            parameter(Filter, ForAndroid)
+            parameter(IllustId, illustId)
+        }.body()
+    }
+
+    override suspend fun nextPageRecommendIllusts(nextUrl: String): IllustRecommendResult {
+        return httpClient.get(nextUrl).body()
+    }
+
+    override suspend fun nextRelatedRecommendIllusts(nextUrl: String): RelatedResult {
+        return httpClient.get(nextUrl).body()
+    }
+
+    override suspend fun getRecommendMangas(): MangaRecommendResult {
+        return httpClient.get("v1/manga/recommended") {
+            parameter(Filter, ForAndroid)
+            parameter(IncludeRankingIllusts, true)
+            parameter(IncludePrivacyPolicy, true)
+        }.body()
+    }
+
+    override suspend fun nextPageMangaIllusts(nextUrl: String): MangaRecommendResult {
+        return httpClient.get(nextUrl).body()
     }
 
     override suspend fun addIllustBookMark(illustId: Long, restrict: String) {
@@ -46,13 +75,13 @@ class KtorPixivRecommendApi @Inject constructor(
         )
     }
 
-    override suspend fun nextPageRecommendIllusts(nextUrl: String): RecommendResult {
-        return httpClient.get(nextUrl).body()
-    }
-
     companion object {
-        const val IllustId: String = "illust_id"
+        const val Filter = "filter"
+        const val ForAndroid = "for_android"
+        const val IllustId = "illust_id"
         const val Restrict = "restrict"
+        const val IncludeRankingIllusts = "include_ranking_illusts"
+        const val IncludePrivacyPolicy = "include_privacy_policy"
     }
 
 }

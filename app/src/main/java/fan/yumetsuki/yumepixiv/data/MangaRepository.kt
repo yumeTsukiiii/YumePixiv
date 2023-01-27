@@ -11,7 +11,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-class IllustRepository constructor(
+class MangaRepository constructor(
     private val pixivRecommendApi: PixivRecommendApi,
     private val coroutineScope: CoroutineScope
 ) {
@@ -33,7 +33,7 @@ class IllustRepository constructor(
 
     suspend fun refreshIllusts() {
         withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.getRecommendIllusts().also { result ->
+            pixivRecommendApi.getRecommendMangas().also { result ->
                 _pagedIllusts.update {
                     buildList {
                         add(result.illusts.toIllustModel())
@@ -47,12 +47,6 @@ class IllustRepository constructor(
             }
         }.also { result ->
             nextIllustUrl = result.nextUrl
-        }
-    }
-
-    suspend fun getWalkthroughIllusts(): List<Illust> {
-        return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.getWalkThroughIllust().illusts.toIllustModel()
         }
     }
 
@@ -80,7 +74,7 @@ class IllustRepository constructor(
         }
         nextIllustUrl?.also { nextUrl ->
             withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-                pixivRecommendApi.nextPageRecommendIllusts(nextUrl).also { result ->
+                pixivRecommendApi.nextPageMangaIllusts(nextUrl).also { result ->
                     _pagedIllusts.update { oldIllusts ->
                         oldIllusts.toMutableList().apply {
                             add(result.illusts.toIllustModel())
@@ -96,7 +90,7 @@ class IllustRepository constructor(
     }
 
     private fun List<PixivIllust>.toIllustModel() = this.filter {
-        it.type == IllustType.Illust
+        it.type == IllustType.Manga
     }.map { it.toIllustModel() }
 
     private fun PixivIllust.toIllustModel(): Illust {

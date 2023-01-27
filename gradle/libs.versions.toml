@@ -1,7 +1,8 @@
 [versions]
-androidxComposeBom = "2022.12.00"
+androidxComposeBom = "2023.01.00"
 ktor = "2.2.2"
 hilt = "2.44"
+accompanist="0.28.0"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
@@ -12,6 +13,8 @@ androidx-compose-material-material-icons-extended = { group = "androidx.compose.
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+com-google-accompanist-accompanist-flowlayout = { group = "com.google.accompanist", name = "accompanist-flowlayout", version.ref = "accompanist" }
+com-google-accompanist-accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
 io-ktor-ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 io-ktor-ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 io-ktor-ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }

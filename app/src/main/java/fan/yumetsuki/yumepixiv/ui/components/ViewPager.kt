@@ -38,7 +38,6 @@ fun LazyHorizontalViewPager(
         if (!reverseLayout) Arrangement.Start else Arrangement.End,
     verticalAlignment: Alignment.Vertical = Alignment.Top,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
-    density: Density = LocalDensity.current,
     content: LazyListScope.() -> Unit
 ) {
 

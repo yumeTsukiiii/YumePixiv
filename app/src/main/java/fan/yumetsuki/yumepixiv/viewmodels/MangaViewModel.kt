@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.data.IllustRepository
+import fan.yumetsuki.yumepixiv.data.MangaRepository
 import fan.yumetsuki.yumepixiv.data.model.Illust
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -15,11 +15,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class IllustViewModel @Inject constructor(
+class MangaViewModel @Inject constructor(
     pixivRecommendApi: PixivRecommendApi
 ): ViewModel() {
 
-    private val repository = IllustRepository(pixivRecommendApi, viewModelScope)
+    private val repository = MangaRepository(pixivRecommendApi, viewModelScope)
 
     private val _uiState = MutableStateFlow(
         UiState(
@@ -215,7 +215,7 @@ class IllustViewModel @Inject constructor(
             tags = tags.map { UiState.IllustTagState(it.name, it.translatedName) },
             width = width,
             height = height,
-            cardHeight = (250..350).random().dp
+            cardHeight = 350.dp
         )
     }
 
@@ -233,7 +233,7 @@ class IllustViewModel @Inject constructor(
             totalBookmarks = totalBookmarks,
             // TODO ISO String 转化为普通的时间，Java 8 工具类不可用，需要自己写
             createDate = createDate,
-            tags = tags.map { IllustViewModel.UiState.IllustTagState(it.name, it.translatedName) },
+            tags = tags.map { UiState.IllustTagState(it.name, it.translatedName) },
             width = width,
             height = height,
         )
@@ -285,11 +285,11 @@ class IllustViewModel @Inject constructor(
             val createDate: String,
             val tags: List<IllustTagState>,
             val width: Int,
-            val height: Int,
+            val height: Int
         )
     }
 
 }
 
-val IllustViewModel.UiState.isOpenIllustDetail: Boolean
+val MangaViewModel.UiState.isOpenIllustDetail: Boolean
     get() = !isReLoading && illusts.isNotEmpty() && currentIllustPage >= 0 && currentIllustPage < illusts.size

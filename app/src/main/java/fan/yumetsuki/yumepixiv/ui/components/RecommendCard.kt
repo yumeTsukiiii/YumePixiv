@@ -88,13 +88,16 @@ fun RecommendCard(
     isFavorite: Boolean = false,
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
     imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     extraContent: (@Composable ColumnScope.() -> Unit)? = null,
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
     Card(
         shape = ShapeDefaults.ExtraSmall,
-        modifier = modifier
+        modifier = onClick?.let {
+            modifier.clickable(onClick = it)
+        } ?: modifier,
     ) {
         Box(
             modifier = Modifier.weight(1.0f)
@@ -139,9 +142,17 @@ fun IllustRankCard(
     avatarImageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
 ) {
     IllustCard(
-        modifier, imageUrl, pageCount, isFavorite, imageContentDescription, onFavoriteClick, imageRequestBuilder
+        modifier,
+        imageUrl,
+        pageCount,
+        isFavorite,
+        imageContentDescription,
+        onFavoriteClick,
+        onClick,
+        imageRequestBuilder
     ) {
         BoxWithConstraints(
             modifier = Modifier
@@ -203,6 +214,7 @@ fun MangaRankCard(
     imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     avatarImageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     imageContentDescription: String? = null,
+    onClick: (() -> Unit)? = null,
     onFavoriteClick: (() -> Unit)? = null,
 ) {
     IllustRankCard(
@@ -216,7 +228,8 @@ fun MangaRankCard(
         imageRequestBuilder,
         avatarImageRequestBuilder,
         imageContentDescription,
-        onFavoriteClick
+        onFavoriteClick,
+        onClick
     )
 }
 
@@ -231,6 +244,7 @@ fun IllustCard(
     isFavorite: Boolean = false,
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
     imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     extraContent: (@Composable ColumnScope.() -> Unit)? = null,
     content: (@Composable BoxScope.() -> Unit)? = null
@@ -242,6 +256,7 @@ fun IllustCard(
         imageContentDescription = imageContentDescription,
         imageRequestBuilder = imageRequestBuilder,
         onFavoriteClick = onFavoriteClick,
+        onClick = onClick,
         extraContent = extraContent
     ) {
         if (pageCount > 1) {
@@ -259,6 +274,7 @@ fun IllustCard(
 /**
  * 漫画卡片
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MangaCard(
     modifier: Modifier = Modifier,
@@ -271,20 +287,36 @@ fun MangaCard(
     imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
     imageContentDescription: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
 ) {
     IllustCard(
-        modifier, imageUrl, pageCount, isFavorite, imageContentDescription, onFavoriteClick, imageRequestBuilder,
+        modifier,
+        imageUrl,
+        pageCount,
+        isFavorite,
+        imageContentDescription,
+        onFavoriteClick,
+        onClick,
+        imageRequestBuilder,
         extraContent = {
             ListTile(
                 leading = {
                     Text(
-                        text = title
+                        text = title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 },
                 subLeading = {
-                    Column {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         if (!tags.isNullOrEmpty()) {
-                            Text(text = tags.joinToString("  "))
+                            Text(
+                                text = tags.joinToString(" "),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                         Row(
                             verticalAlignment = Alignment.CenterVertically

@@ -21,6 +21,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import fan.yumetsuki.yumepixiv.ui.screen.Route
 import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
+import fan.yumetsuki.yumepixiv.viewmodels.MangaViewModel
 
 val home = Route(
     route = "home",
@@ -44,13 +45,14 @@ class TabItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(
-    illustViewModel: IllustViewModel = hiltViewModel()
+    illustViewModel: IllustViewModel = hiltViewModel(),
+    mangaViewModel: MangaViewModel = hiltViewModel()
 ) {
 
-    val tabs = rememberSaveable {
+    val tabs = remember {
         listOf(
             TabItem("插画") { IllustScreen(Modifier.fillMaxSize(), illustViewModel) },
-            TabItem("漫画") { MangaScreen() },
+            TabItem("漫画") { MangaScreen(Modifier.fillMaxSize(), mangaViewModel) },
             TabItem("小说") { NovelScreen() }
         )
     }
@@ -62,6 +64,23 @@ fun Home(
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val saveableStateHolder = rememberSaveableStateHolder()
+
+//    val pagerState = rememberPagerState()
+//    val selectedPage by remember {
+//        derivedStateOf {
+//            pagerState.currentPage
+//        }
+//    }
+//
+//    LaunchedEffect(selectedTabIndex) {
+//        if (selectedTabIndex != selectedPage) {
+//            pagerState.animateScrollToPage(selectedTabIndex)
+//        }
+//    }
+//
+//    LaunchedEffect(selectedPage) {
+//        selectedTabIndex = selectedPage
+//    }
 
     Scaffold(
         topBar = {
@@ -86,7 +105,10 @@ fun Home(
     ) { paddingValues ->
 
         Column(modifier = Modifier.padding(paddingValues)) {
-            TabRow(selectedTabIndex, modifier = Modifier.zIndex(1f)) {
+            TabRow(
+                selectedTabIndex,
+                modifier = Modifier.zIndex(1f)
+            ) {
                 tabs.forEachIndexed { index, route ->
                     Tab(
                         selected = index == selectedTabIndex,
@@ -100,6 +122,14 @@ fun Home(
                 }
             }
             Box(modifier = Modifier.weight(1.0f)) {
+                // FIXME Pager 暂无法和 Material3 Tab Indicator 联动，TabPosition API 为 internal
+                //       而且会和 Tab 有跳动的 Bug，还是和嵌套滚动容器有关，官方 TabBehaviour 的 Bug
+//                HorizontalPager(
+//                    count = tabs.size,
+//                    state = pagerState
+//                ) { page ->
+//                    tabs[page].content()
+//                }
                 tabs.forEachIndexed { index, tabItem ->
                     this@Column.AnimatedVisibility(
                         visible = selectedTabIndex == index,
