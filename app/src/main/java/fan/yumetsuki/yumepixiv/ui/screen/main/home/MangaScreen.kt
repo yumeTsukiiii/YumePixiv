@@ -184,7 +184,7 @@ fun MangaScreen(
                                     contentPadding = PaddingValues(8.dp),
                                 ) {
                                     itemsIndexed(screenState.rankingIllust) { index, rankingIllust ->
-                                        IllustRankCard(
+                                        MangaRankCard(
                                             imageUrl = rankingIllust.coverImageUrl ?: TODO("默认图片"),
                                             author = rankingIllust.author,
                                             title = rankingIllust.title,

@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -30,7 +31,9 @@ import fan.yumetsuki.yumepixiv.R
 @Composable
 fun FavoriteIcon(
     modifier: Modifier = Modifier,
-    isFavorite: Boolean
+    isFavorite: Boolean,
+    favoriteTint: Color = Color.Red,
+    notFavoriteTint: Color = LocalContentColor.current
 ) {
     Box(modifier = modifier) {
         AnimatedVisibility(
@@ -40,7 +43,9 @@ fun FavoriteIcon(
         ) {
             Icon(
                 imageVector = Icons.Default.FavoriteBorder,
-                contentDescription = null)
+                contentDescription = null,
+                tint = notFavoriteTint
+            )
         }
         AnimatedVisibility(
             visible = isFavorite,
@@ -50,7 +55,8 @@ fun FavoriteIcon(
             Icon(
                 imageVector = Icons.Default.Favorite,
                 contentDescription = null,
-                tint = Color.Red)
+                tint = favoriteTint
+            )
         }
     }
 }
@@ -90,6 +96,8 @@ fun RecommendCard(
     onFavoriteClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
+    favoriteTint: Color = Color.Red,
+    notFavoriteTint: Color = LocalContentColor.current,
     extraContent: (@Composable ColumnScope.() -> Unit)? = null,
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
@@ -113,6 +121,8 @@ fun RecommendCard(
             content?.invoke(this)
             FavoriteIcon(
                 isFavorite = isFavorite,
+                favoriteTint = favoriteTint,
+                notFavoriteTint = notFavoriteTint,
                 modifier = Modifier.align(Alignment.BottomEnd)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
                     .let { modifier ->
@@ -274,7 +284,6 @@ fun IllustCard(
 /**
  * 漫画卡片
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MangaCard(
     modifier: Modifier = Modifier,
@@ -340,11 +349,130 @@ fun MangaCard(
     )
 }
 
+@Composable
+fun NovelRankingCard(
+    modifier: Modifier = Modifier,
+    imageUrl: String,
+    title: String,
+    author: String,
+    authorAvatar: String,
+    wordCount: Int = 1,
+    tags: List<String>? = null,
+    isFavorite: Boolean = false,
+    imageContentDescription: String? = null,
+    onFavoriteClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    avatarImageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true)
+) {
+    RecommendCard(
+        modifier = modifier,
+        imageUrl = imageUrl,
+        isFavorite = isFavorite,
+        imageContentDescription = imageContentDescription,
+        imageRequestBuilder = imageRequestBuilder,
+        onFavoriteClick = onFavoriteClick,
+        onClick = onClick,
+        notFavoriteTint = Color.White
+    ) {
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .background(Color.DarkGray.copy(alpha = 0.4f))
+                .fillMaxSize()
+        ) {
+            Text(
+                text = "${wordCount}字",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 8.dp, end = 8.dp)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp, alignment = Alignment.CenterVertically)
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+
+                if (!tags.isNullOrEmpty()) {
+                    Text(
+                        text = tags.joinToString(" "),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .width(maxWidth - 40.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(bottom = 8.dp, start = 8.dp)
+            ) {
+                AsyncImage(
+                    model = avatarImageRequestBuilder
+                        .data(authorAvatar)
+                        .build(),
+                    contentDescription = imageContentDescription,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(ButtonDefaults.IconSize)
+                )
+                Text(
+                    text = author,
+                    modifier = Modifier.padding(start = 4.dp),
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
 /**
  * 小说卡片
  */
 @Composable
-fun NovelCard() {
+fun NovelCard(
+    modifier: Modifier = Modifier,
+    imageUrl: String,
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true)
+) {
+
+    ElevatedCard(
+        modifier = Modifier
+    ) {
+
+        Row {
+
+            AsyncImage(
+                model = imageRequestBuilder.data(imageUrl).build(),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)),
+                contentDescription = null
+            )
+
+        }
+
+    }
 
 }
 
@@ -403,4 +531,36 @@ fun IllustRankCardPreview() {
             title = "如月澪"
         )
     }
+}
+
+@Preview
+@Composable
+fun NovelRankingCardPreview() {
+    var isFavorite by remember {
+        mutableStateOf(false)
+    }
+
+    val imageUrl = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7"
+
+    Row {
+        NovelRankingCard(
+            imageUrl = imageUrl,
+            isFavorite = isFavorite,
+            onFavoriteClick = {
+                isFavorite = !isFavorite
+            },
+            modifier = Modifier.size(200.dp, height = 200.dp),
+            author = "二阶堂梦月",
+            authorAvatar = imageUrl,
+            title = "很长很长的小说名字".repeat(2),
+            tags = listOf("#测试tag", "#测试tag", "#测试tag", "#测试tag", "#测试tag", "#测试tag", "#测试tag", "#测试tag", "#测试tag", "#测试tag"),
+            wordCount = 10000
+        )
+    }
+}
+
+@Preview
+@Composable
+fun NovelCardPreview() {
+
 }
