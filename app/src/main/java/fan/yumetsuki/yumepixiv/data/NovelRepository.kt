@@ -1,12 +1,11 @@
 package fan.yumetsuki.yumepixiv.data
 
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.network.model.PixivIllust
-import fan.yumetsuki.yumepixiv.data.model.Illust
-import fan.yumetsuki.yumepixiv.data.model.ImageModel
+import fan.yumetsuki.yumepixiv.data.model.Novel
+import fan.yumetsuki.yumepixiv.data.model.SeriesModel
 import fan.yumetsuki.yumepixiv.data.model.TagModel
 import fan.yumetsuki.yumepixiv.data.model.UserModel
-import fan.yumetsuki.yumepixiv.network.model.IllustType
+import fan.yumetsuki.yumepixiv.network.model.PixivNovel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -14,7 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-class IllustRepository constructor(
+class NovelRepository constructor(
     private val pixivRecommendApi: PixivRecommendApi,
     private val coroutineScope: CoroutineScope
 ) {
@@ -23,28 +22,28 @@ class IllustRepository constructor(
 
     private var nextIllustUrl: String? = null
 
-    private val _pagedIllusts = MutableStateFlow<List<List<Illust>>>(emptyList())
-    private val _pagedRankingIllusts = MutableStateFlow<List<List<Illust>>>(emptyList())
+    private val _pagedNovels = MutableStateFlow<List<List<Novel>>>(emptyList())
+    private val _pagedRankingNovels = MutableStateFlow<List<List<Novel>>>(emptyList())
 
-    val illusts = _pagedIllusts.map {
+    val novels = _pagedNovels.map {
         it.flatten()
     }.stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
 
-    val rankingIllust = _pagedRankingIllusts.map {
+    val rankingNovels = _pagedRankingNovels.map {
         it.flatten()
     }.stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
 
-    suspend fun refreshIllusts() {
+    suspend fun refreshNovels() {
         withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.getRecommendIllusts().also { result ->
-                _pagedIllusts.update {
+            pixivRecommendApi.getRecommendNovels().also { result ->
+                _pagedNovels.update {
                     buildList {
-                        add(result.illusts.toIllustModel())
+                        add(result.novels.toNovelModel())
                     }
                 }
-                _pagedRankingIllusts.update {
+                _pagedRankingNovels.update {
                     buildList {
-                        add(result.rankingIllusts?.toIllustModel() ?: emptyList())
+                        add(result.rankingNovels?.toNovelModel() ?: emptyList())
                     }
                 }
             }
@@ -53,27 +52,15 @@ class IllustRepository constructor(
         }
     }
 
-    suspend fun getWalkthroughIllusts(): List<Illust> {
+    suspend fun addNovelBookMark(novel: Novel) {
         return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.getWalkThroughIllust().illusts.toIllustModel()
+            pixivRecommendApi.addNovelBookmark(novel.id, BookmarkRestrictPublic)
         }
     }
 
-    suspend fun addIllustBookMark(illust: Illust) {
+    suspend fun deleteNovelBookMark(novel: Novel) {
         return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.addIllustBookMark(illust.id, BookmarkRestrictPublic)
-        }
-    }
-
-    suspend fun deleteIllustBookMark(illust: Illust) {
-        return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.deleteIllustBookMark(illust.id)
-        }
-    }
-
-    suspend fun relatedIllusts(illust: Illust): List<Illust> {
-        return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.relatedIllusts(illust.id).illusts.toIllustModel()
+            pixivRecommendApi.deleteNovelBookmark(novel.id)
         }
     }
 
@@ -83,10 +70,10 @@ class IllustRepository constructor(
         }
         nextIllustUrl?.also { nextUrl ->
             withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-                pixivRecommendApi.nextPageRecommendIllusts(nextUrl).also { result ->
-                    _pagedIllusts.update { oldIllusts ->
+                pixivRecommendApi.nextPageNovels(nextUrl).also { result ->
+                    _pagedNovels.update { oldIllusts ->
                         oldIllusts.toMutableList().apply {
-                            add(result.illusts.toIllustModel())
+                            add(result.novels.toNovelModel())
                         }
                     }
                 }
@@ -98,18 +85,16 @@ class IllustRepository constructor(
         }
     }
 
-    private fun List<PixivIllust>.toIllustModel() = this.filter {
-        it.type == IllustType.Illust
-    }.map { it.toIllustModel() }
+    private fun List<PixivNovel>.toNovelModel() = this.map { it.toNovelModel() }
 
-    private fun PixivIllust.toIllustModel(): Illust {
-        return Illust(
+    private fun PixivNovel.toNovelModel(): Novel {
+        return Novel(
             id = id,
             title = title,
             caption = caption,
             createDate = createDate,
             coverPage = imageUrls.run {
-                squareMedium ?: medium ?: large ?: original
+               medium ?: squareMedium ?: large ?: original
             },
             user = user.run {
                 UserModel(
@@ -123,27 +108,18 @@ class IllustRepository constructor(
                 )
             },
             pageCount = pageCount,
-            metaPages = metaSinglePage.originalImageUrl?.let {
-                listOf(
-                    ImageModel(
-                        original = it
-                    )
-                )
-            } ?: metaPages.map { metaPage ->
-                metaPage.imageUrls.run {
-                    ImageModel(
-                        original = original,
-                        large = large,
-                        medium = medium,
-                        squareMedium = squareMedium
-                    )
-                }
-            },
             totalView = totalView,
             totalBookmarks = totalBookMarks,
             isBookMarked = isBookMarked,
-            width = width,
-            height = height,
+            textLength = textLength,
+            series = series?.takeIf {
+                it.id != null && it.title != null
+            }?.let {
+                SeriesModel(
+                    id = series.id!!,
+                    title = series.title!!
+                )
+            },
             tags = tags.map { TagModel(it.name, it.translatedName) }
         )
     }

@@ -1,11 +1,8 @@
 package fan.yumetsuki.yumepixiv.network.impl
 
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.network.model.IllustRecommendResult
 import fan.yumetsuki.yumepixiv.di.AppApiHttpClient
-import fan.yumetsuki.yumepixiv.network.model.MangaRecommendResult
-import fan.yumetsuki.yumepixiv.network.model.RelatedResult
-import fan.yumetsuki.yumepixiv.network.model.WalkThroughResult
+import fan.yumetsuki.yumepixiv.network.model.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -56,6 +53,17 @@ class KtorPixivRecommendApi @Inject constructor(
         return httpClient.get(nextUrl).body()
     }
 
+    override suspend fun getRecommendNovels(): NovelRecommendResult {
+        return httpClient.get("v1/novel/recommended") {
+            parameter(IncludeRankingNovels, true)
+            parameter(IncludePrivacyPolicy, true)
+        }.body()
+    }
+
+    override suspend fun nextPageNovels(nextUrl: String): NovelRecommendResult {
+        return httpClient.get(nextUrl).body()
+    }
+
     override suspend fun addIllustBookMark(illustId: Long, restrict: String) {
         httpClient.submitForm(
             "v2/illust/bookmark/add",
@@ -75,12 +83,33 @@ class KtorPixivRecommendApi @Inject constructor(
         )
     }
 
+    override suspend fun addNovelBookmark(novelId: Long, restrict: String) {
+        httpClient.submitForm(
+            "v2/novel/bookmark/add",
+            formParameters = Parameters.build {
+                append(NovelId, novelId.toString())
+                append(Restrict, restrict)
+            }
+        )
+    }
+
+    override suspend fun deleteNovelBookmark(novelId: Long) {
+        httpClient.submitForm(
+            "v1/novel/bookmark/delete",
+            formParameters = Parameters.build {
+                append(NovelId, novelId.toString())
+            }
+        )
+    }
+
     companion object {
         const val Filter = "filter"
         const val ForAndroid = "for_android"
         const val IllustId = "illust_id"
+        const val NovelId = "illust_id"
         const val Restrict = "restrict"
         const val IncludeRankingIllusts = "include_ranking_illusts"
+        const val IncludeRankingNovels = "include_ranking_novels"
         const val IncludePrivacyPolicy = "include_privacy_policy"
     }
 

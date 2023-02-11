@@ -14,15 +14,15 @@ data class PixivIllust(
     @IllustType
     val type: String,
     @SerialName("image_urls")
-    val imageUrls: ImageUrl,
+    val imageUrls: PixivImageUrl,
     @SerialName("caption")
     val caption: String,
     @SerialName("restrict")
     val restrict: Int,
     @SerialName("user")
-    val user: User,
+    val user: PixivUser,
     @SerialName("tags")
-    val tags: List<Tag>,
+    val tags: List<PixivTag>,
     @SerialName("tools")
     val tools: List<String>,
     @SerialName("create_date")
@@ -38,7 +38,7 @@ data class PixivIllust(
     @SerialName("x_restrict")
     val xRestrict: Int,
     @SerialName("series")
-    val series: Series? = null,
+    val series: PixivSeries? = null,
     @SerialName("meta_single_page")
     val metaSinglePage: MetaSinglePage,
     @SerialName("meta_pages")
@@ -60,48 +60,6 @@ data class PixivIllust(
 ) {
 
     @Serializable
-    data class ImageUrl(
-        @SerialName("large")
-        val large: String? = null,
-        @SerialName("medium")
-        val medium: String? = null,
-        @SerialName("square_medium")
-        val squareMedium: String? = null,
-        @SerialName("original")
-        val original: String? = null
-    )
-
-    @Serializable
-    data class User(
-        @SerialName("id")
-        val id: Long,
-        @SerialName("name")
-        val name: String,
-        @SerialName("account")
-        val account: String,
-        @SerialName("profile_image_urls")
-        val profileImageUrls: ImageUrl,
-        @SerialName("is_followed")
-        val isFollowed: Boolean
-    )
-
-    @Serializable
-    data class Tag(
-        @SerialName("name")
-        val name: String,
-        @SerialName("translated_name")
-        val translatedName: String? = null
-    )
-
-    @Serializable
-    data class Series(
-        @SerialName("id")
-        val id: Long,
-        @SerialName("title")
-        val title: String
-    )
-
-    @Serializable
     data class MetaSinglePage(
         @SerialName("original_image_url")
         val originalImageUrl: String? = null
@@ -110,7 +68,7 @@ data class PixivIllust(
     @Serializable
     data class MetaPage(
         @SerialName("image_urls")
-        val imageUrls: ImageUrl
+        val imageUrls: PixivImageUrl
     )
 }
 

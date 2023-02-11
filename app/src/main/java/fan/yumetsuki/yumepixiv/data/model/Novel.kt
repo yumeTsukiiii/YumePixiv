@@ -1,6 +1,6 @@
 package fan.yumetsuki.yumepixiv.data.model
 
-data class Illust(
+class Novel(
     val id: Long,
     val title: String,
     val caption: String,
@@ -10,12 +10,11 @@ data class Illust(
     val coverPage: String?,
     val user: UserModel,
     val pageCount: Int,
-    val metaPages: List<ImageModel>,
     val totalView: Int,
     val totalBookmarks: Int,
     val isBookMarked: Boolean,
     val createDate: String,
+    val textLength: Int,
+    val series: SeriesModel?,
     val tags: List<TagModel>,
-    val width: Int,
-    val height: Int
 )

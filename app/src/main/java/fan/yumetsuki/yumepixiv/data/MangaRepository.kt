@@ -3,6 +3,9 @@ package fan.yumetsuki.yumepixiv.data
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
 import fan.yumetsuki.yumepixiv.network.model.PixivIllust
 import fan.yumetsuki.yumepixiv.data.model.Illust
+import fan.yumetsuki.yumepixiv.data.model.ImageModel
+import fan.yumetsuki.yumepixiv.data.model.TagModel
+import fan.yumetsuki.yumepixiv.data.model.UserModel
 import fan.yumetsuki.yumepixiv.network.model.IllustType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -103,7 +106,7 @@ class MangaRepository constructor(
                 squareMedium ?: medium ?: large ?: original
             },
             user = user.run {
-                Illust.User(
+                UserModel(
                     id = id,
                     name = name,
                     account = account,
@@ -116,13 +119,13 @@ class MangaRepository constructor(
             pageCount = pageCount,
             metaPages = metaSinglePage.originalImageUrl?.let {
                 listOf(
-                    Illust.Image(
+                    ImageModel(
                         original = it
                     )
                 )
             } ?: metaPages.map { metaPage ->
                 metaPage.imageUrls.run {
-                    Illust.Image(
+                    ImageModel(
                         original = original,
                         large = large,
                         medium = medium,
@@ -135,7 +138,7 @@ class MangaRepository constructor(
             isBookMarked = isBookMarked,
             width = width,
             height = height,
-            tags = tags.map { Illust.Tag(it.name, it.translatedName) }
+            tags = tags.map { TagModel(it.name, it.translatedName) }
         )
     }
 

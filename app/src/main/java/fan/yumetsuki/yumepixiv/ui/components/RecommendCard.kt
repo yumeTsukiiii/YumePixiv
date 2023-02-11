@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.google.accompanist.flowlayout.FlowRow
 import fan.yumetsuki.yumepixiv.R
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -383,7 +387,7 @@ fun NovelRankingCard(
                 .fillMaxSize()
         ) {
             Text(
-                text = "${wordCount}字",
+                text = "$wordCount 字",
                 style = MaterialTheme.typography.labelMedium,
                 color = Color.White,
                 modifier = Modifier
@@ -399,10 +403,10 @@ fun NovelRankingCard(
                 Text(
                     text = title,
                     color = Color.White,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 2,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 32.dp)
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 )
 
                 if (!tags.isNullOrEmpty()) {
@@ -450,28 +454,119 @@ fun NovelRankingCard(
 /**
  * 小说卡片
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NovelCard(
     modifier: Modifier = Modifier,
     imageUrl: String,
-    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true)
+    title: String,
+    series: String? = null,
+    author: String,
+    authorAvatarUrl: String,
+    wordCount: Int,
+    bookmarks: Int,
+    isBookmark: Boolean,
+    tags: List<String> = emptyList(),
+    onSeriesClick: (() -> Unit)? = null,
+    onBookmarkClick: () -> Unit = {},
+    imageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true),
+    avatarImageRequestBuilder: ImageRequest.Builder = ImageRequest.Builder(LocalContext.current).crossfade(true)
 ) {
 
     ElevatedCard(
-        modifier = Modifier
+        modifier = modifier
     ) {
 
-        Row {
+        Row(
+            modifier = Modifier.weight(1f)
+                .padding(8.dp)
+        ) {
 
-            AsyncImage(
-                model = imageRequestBuilder.data(imageUrl).build(),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-                contentDescription = null
-            )
+            Column(
+                modifier = Modifier
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+            ) {
+                AsyncImage(
+                    model = imageRequestBuilder.data(imageUrl).build(),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .width(96.dp)
+                        .weight(1f),
+                    contentDescription = null
+                )
+                Text(text = "$wordCount 字", style = MaterialTheme.typography.labelMedium)
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 8.dp, bottom = 8.dp, end = 8.dp, start = 4.dp),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(imageVector = Icons.Outlined.Book, contentDescription = null, modifier = Modifier.padding(top = 2.dp))
+                    Text(text = title, style = MaterialTheme.typography.titleMedium)
+                }
+                if (series != null) {
+                    AssistChip(
+                        onClick = onSeriesClick ?: {},
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Outlined.Collections, contentDescription = null)
+                        },
+                        label = {
+                            Text(
+                                text = series,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    )
+                }
+                if (tags.isNotEmpty()) {
+                    Text(
+                        text = tags.joinToString(" "),
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(top = 8.dp),
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = Color.Gray
+                        )
+                    )
+                }
+            }
 
         }
 
+        Divider(
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        ListItem(
+            headlineText = {
+               Text(text = author)
+            },
+            leadingContent = {
+                AsyncImage(
+                    model = avatarImageRequestBuilder.data(authorAvatarUrl).build(),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(40.dp),
+                    contentDescription = null
+                )
+            },
+            trailingContent = {
+                TextButton(
+                    onClick = onBookmarkClick
+                ) {
+                    FavoriteIcon(isFavorite = isBookmark)
+                    Text(text = "$bookmarks", modifier = Modifier.padding(start = 4.dp))
+                }
+            }
+        )
     }
 
 }
@@ -562,5 +657,28 @@ fun NovelRankingCardPreview() {
 @Preview
 @Composable
 fun NovelCardPreview() {
+    var isBookmark by remember {
+        mutableStateOf(false)
+    }
 
+    val imageUrl = "https://tse4-mm.cn.bing.net/th/id/OIP-C.P5Y9Ph3AUf7NSr9GzYDHjAHaEo?w=280&h=180&c=7&r=0&o=5&dpr=2&pid=1.7"
+    NovelCard(
+        imageUrl = imageUrl,
+        title = "测试Title",
+        series = "这是一个测试系列",
+        author = "二阶堂梦月",
+        authorAvatarUrl = imageUrl,
+        wordCount = 10000,
+        bookmarks = 114514,
+        tags = (1..20).map {
+            "测试 Tag"
+        },
+        isBookmark = isBookmark,
+        onBookmarkClick = {
+             isBookmark = !isBookmark
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(232.dp)
+    )
 }
