@@ -17,8 +17,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import fan.yumetsuki.yumepixiv.ui.screen.Route
 import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
 import fan.yumetsuki.yumepixiv.viewmodels.MangaViewModel
@@ -29,9 +31,13 @@ val home = Route(
     icon = Icons.Default.Home,
 )
 
-fun NavGraphBuilder.homeScreen(illustViewModel: IllustViewModel? = null) {
+fun NavGraphBuilder.homeScreen(
+    rootNavController: NavController? = null,
+    illustViewModel: IllustViewModel? = null
+) {
     composable(home.route) {
         Home(
+            navController = rootNavController ?: rememberNavController(),
             illustViewModel = illustViewModel ?: hiltViewModel()
         )
     }
@@ -45,6 +51,7 @@ class TabItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(
+    navController: NavController = rememberNavController(),
     illustViewModel: IllustViewModel = hiltViewModel(),
     mangaViewModel: MangaViewModel = hiltViewModel()
 ) {
@@ -53,7 +60,7 @@ fun Home(
         listOf(
             TabItem("插画") { IllustScreen(Modifier.fillMaxSize(), illustViewModel) },
             TabItem("漫画") { MangaScreen(Modifier.fillMaxSize(), mangaViewModel) },
-            TabItem("小说") { NovelScreen() }
+            TabItem("小说") { NovelScreen(navController = navController) }
         )
     }
 

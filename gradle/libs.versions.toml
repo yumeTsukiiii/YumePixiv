@@ -16,6 +16,7 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 com-google-accompanist-accompanist-flowlayout = { group = "com.google.accompanist", name = "accompanist-flowlayout", version.ref = "accompanist" }
 com-google-accompanist-accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
 com-google-accompanist-accompanist-swiperefresh = { group = "com.google.accompanist", name = "accompanist-swiperefresh", version.ref = "accompanist" }
+com-google-accompanist-accompanist-webview = { group = "com.google.accompanist", name = "accompanist-webview", version.ref = "accompanist" }
 io-ktor-ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 io-ktor-ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 io-ktor-ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }

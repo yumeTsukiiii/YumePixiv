@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.request.ImageRequest
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -38,6 +40,7 @@ import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetail
 import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailImage
 import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailScreen
 import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailTag
+import fan.yumetsuki.yumepixiv.ui.screen.web.navigateToWebView
 import fan.yumetsuki.yumepixiv.utils.pixivImageRequestBuilder
 import fan.yumetsuki.yumepixiv.viewmodels.MangaViewModel
 import fan.yumetsuki.yumepixiv.viewmodels.NovelViewModel
@@ -50,12 +53,15 @@ private fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
         .crossfade(500)
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
-    ExperimentalComposeUiApi::class, ExperimentalAnimationApi::class
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalAnimationApi::class
 )
 @Composable
 fun NovelScreen(
     modifier: Modifier = Modifier,
+    navController: NavController = rememberNavController(),
     viewModel: NovelViewModel = hiltViewModel()
 ) {
 
@@ -236,7 +242,7 @@ fun NovelScreen(
                                                     viewModel.changeRankingNovelBookmark(index)
                                                 },
                                                 onClick = {
-                                                    // TODO
+                                                    viewModel.navigateToRankingNovelDetail(index, navController)
                                                 }
                                             )
                                         }
@@ -264,9 +270,11 @@ fun NovelScreen(
                                         itemsIndexed(screenState.novels) { index, novel ->
                                             NovelCard(
                                                 imageUrl = novel.coverImageUrl ?: TODO("默认图片"),
-                                                modifier = Modifier.height(novel.cardHeight).clickable {
-                                                    // TODO
-                                                },
+                                                modifier = Modifier
+                                                    .height(novel.cardHeight)
+                                                    .clickable {
+                                                        viewModel.navigateToNovelDetail(index, navController)
+                                                    },
                                                 isBookmark = novel.isBookmark,
                                                 bookmarks = novel.totalBookmarks,
                                                 title = novel.title,

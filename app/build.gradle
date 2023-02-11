@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.com.google.accompanist.accompanist.flowlayout)
     implementation(libs.com.google.accompanist.accompanist.pager)
     implementation(libs.com.google.accompanist.accompanist.swiperefresh)
+    implementation(libs.com.google.accompanist.accompanist.webview)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

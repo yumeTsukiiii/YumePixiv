@@ -43,9 +43,10 @@ fun NavController.navigateToMain(builder: NavOptionsBuilder.() -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    navController: NavHostController = rememberNavController()
+    rootNavController: NavHostController = rememberNavController()
 ) {
     val appRoutes = listOf(home, news)
+    val navController = rememberNavController()
 
     Scaffold(
         bottomBar = {
@@ -83,7 +84,7 @@ fun MainScreen(
         }
     ) {
         NavHost(navController = navController, startDestination = home.route, modifier = Modifier.padding(it)) {
-            homeScreen()
+            homeScreen(rootNavController = rootNavController)
             dynamicMessageScreen()
         }
     }

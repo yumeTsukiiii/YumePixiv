@@ -61,26 +61,26 @@ fun <T: HttpClientEngineConfig> HttpClientConfig<T>.installJson() {
     }
 }
 
+fun defaultHeader(host: String? = null): Map<String, String> = mapOf(
+    PixivHttpHeaders.AppOs to "android",
+    PixivHttpHeaders.AppOsVersion to "6.0.1", // TODO 看是否动态获取 AppOsVersion
+    PixivHttpHeaders.AppVersion to "6.68.0",
+    HttpHeaders.AcceptLanguage to "zh_CN", // TODO 国际化
+    HttpHeaders.UserAgent to "PixivAndroidApp/6.68.0 (Android 6.0.1; MuMu)", // TODO 动态获取 AppOsVersion / 设备机型
+    HttpHeaders.ContentType to "${ContentType.Application.Json};charset=UTF-8",
+    // HttpHeaders.Connection to "Keep-Alive", // TODO 看是否有必要
+).toMutableMap().apply {
+    if (host != null) {
+        put(HttpHeaders.Host, host)
+    }
+}
+
 fun <T: HttpClientEngineConfig> HttpClientConfig<T>.installDefaultRequest(baseUrl: String, host: String) {
     install(DefaultRequest) {
         url(baseUrl)
-        // TODO 看是否动态获取 AppOsVersion
-        header(PixivHttpHeaders.AppOs, "android")
-        header(PixivHttpHeaders.AppOsVersion, "6.0.1")
-        header(PixivHttpHeaders.AppVersion, "6.68.0")
-
-        // 不能添加 gzip encoding，否则会 MalformedInputException
-//        header(HttpHeaders.AcceptEncoding, "gzip")
-        // TODO 国际化
-        header(HttpHeaders.AcceptLanguage, "zh_CN")
-        // TODO 动态获取 AppOsVersion / 设备机型
-        header(HttpHeaders.UserAgent, "PixivAndroidApp/6.68.0 (Android 6.0.1; MuMu)")
-
-        // TODO 看是否有必要
-        header(HttpHeaders.ContentType, "${ContentType.Application.Json};charset=UTF-8")
-//        header(HttpHeaders.Connection, "Keep-Alive")
-
-        header(HttpHeaders.Host, host)
+        defaultHeader(host).forEach { (key, value) ->
+            header(key, value)
+        }
     }
 }
 
