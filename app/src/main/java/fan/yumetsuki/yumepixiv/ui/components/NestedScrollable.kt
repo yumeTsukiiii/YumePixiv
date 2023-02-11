@@ -52,9 +52,11 @@ fun Modifier.nestedScrollable(
 internal fun rememberNestedScrollableState(
     parentScrollState: ScrollableState,
     childScrollState: ScrollableState,
-    isChildReachTop: () -> Boolean
+    onScroll: ((delta: Float) -> Unit)? = null,
+    isChildReachTop: () -> Boolean,
 ): NestedScrollableState {
     val scrollableState = rememberScrollableState { delta ->
+        onScroll?.invoke(delta)
         if (isChildReachTop()) {
             val parentConsumed = -parentScrollState.dispatchRawDelta(-delta)
             // 父容器消费不完 delta，剩余滚动传递给子容器

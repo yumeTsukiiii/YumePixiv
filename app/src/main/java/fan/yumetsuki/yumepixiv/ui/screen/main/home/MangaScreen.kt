@@ -1,5 +1,9 @@
 package fan.yumetsuki.yumepixiv.ui.screen.main.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollBy
@@ -11,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Star
@@ -34,6 +39,7 @@ import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailTag
 import fan.yumetsuki.yumepixiv.utils.pixivImageRequestBuilder
 import fan.yumetsuki.yumepixiv.viewmodels.MangaViewModel
 import fan.yumetsuki.yumepixiv.viewmodels.isOpenIllustDetail
+import kotlinx.coroutines.launch
 
 @Composable
 private fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
@@ -42,7 +48,7 @@ private fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
-    ExperimentalComposeUiApi::class
+    ExperimentalComposeUiApi::class, ExperimentalAnimationApi::class
 )
 @Composable
 fun MangaScreen(
@@ -50,6 +56,9 @@ fun MangaScreen(
     viewModel: MangaViewModel = hiltViewModel()
 ) {
 
+    var reachTopVisible by remember {
+        mutableStateOf(false)
+    }
     val screenState by viewModel.uiState.collectAsState()
 
     val refreshLayoutState = rememberRefreshLayoutState(
@@ -60,11 +69,19 @@ fun MangaScreen(
     val childScrollState = rememberLazyGridState()
     val nestedScrollableState = rememberNestedScrollableState(
         parentScrollState = parentScrollState,
-        childScrollState = childScrollState
+        childScrollState = childScrollState,
+        onScroll = { delta ->
+            if (delta != 0f) {
+                reachTopVisible = !(
+                    childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
+                ) && delta > 0
+            }
+        }
     ) {
         childScrollState.firstVisibleItemIndex == 0 && childScrollState.firstVisibleItemScrollOffset == 0
     }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = screenState.isReLoading)
+    val coroutineScope = rememberCoroutineScope()
 
     val firstVisibleItemIndex by remember {
         derivedStateOf {
@@ -87,8 +104,6 @@ fun MangaScreen(
     }
 
     // TODO 抽离 StateRefreshLayout，封装 refresh 和 load 状态
-    // TODO 添加 FloatActionButton 回到顶部
-    // TODO 添加 showFooter / showHeader 能力，外部处于 load / refresh 状态时才允许显示，在 StateRefreshLayout 里做
     LaunchedEffect(
         firstVisibleItemIndex,
         totalVisibleSize,
@@ -114,178 +129,199 @@ fun MangaScreen(
         }
     }
 
-    SwipeRefresh(state = swipeRefreshState, onRefresh = {
-        viewModel.reloadIllusts()
-    }) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (screenState.rankingIllust.isEmpty() && screenState.illusts.isEmpty() && !screenState.isReLoading) {
-                Box(modifier = modifier) {
-                    // TODO UI 修改
-                    Text(text = "没有数据欸！！！")
+    Scaffold(
+        floatingActionButton = {
+            // 在 Scaffold 中用 Animated 和 Floating fadeIn 动画失效，换成 scaleIn，官方 Bug 吧
+            AnimatedVisibility(
+                visible = reachTopVisible,
+                enter = scaleIn(),
+                exit = scaleOut()
+            ) {
+                FloatingActionButton(onClick = {
+                    coroutineScope.launch {
+                        childScrollState.scrollToItem(0)
+                        parentScrollState.scrollTo(0)
+                    }
+                }) {
+                    Icon(imageVector = Icons.Default.ArrowUpward, contentDescription = null)
                 }
-            } else if (screenState.rankingIllust.isNotEmpty() && screenState.illusts.isNotEmpty()) {
-                RefreshLayout(
-                    scrollBehaviour = RefreshLayoutDefaults.flingScrollBehaviour(
-                        isReachTop = { false },
-                        isReachBottom = {
-                            childScrollState.layoutInfo.visibleItemsInfo.find { item ->
-                                item.index == childScrollState.layoutInfo.totalItemsCount - 1 && item.offset.y + item.size.height <= childScrollState.layoutInfo.viewportEndOffset
-                            } != null
+            }
+        }
+    ) {
+        SwipeRefresh(state = swipeRefreshState, modifier = Modifier.padding(it), onRefresh = {
+            viewModel.reloadIllusts()
+        }) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (screenState.rankingIllust.isEmpty() && screenState.illusts.isEmpty() && !screenState.isReLoading) {
+                    Box(modifier = modifier) {
+                        // TODO UI 修改
+                        Text(text = "没有数据欸！！！")
+                    }
+                } else if (screenState.rankingIllust.isNotEmpty() && screenState.illusts.isNotEmpty()) {
+                    RefreshLayout(
+                        scrollBehaviour = RefreshLayoutDefaults.flingScrollBehaviour(
+                            isReachTop = { false },
+                            isReachBottom = {
+                                childScrollState.layoutInfo.visibleItemsInfo.find { item ->
+                                    item.index == childScrollState.layoutInfo.totalItemsCount - 1 && item.offset.y + item.size.height <= childScrollState.layoutInfo.viewportEndOffset
+                                } != null
+                            },
+                            state = refreshLayoutState,
+                        ),
+                        modifier = Modifier.fillMaxSize(),
+                        footer = {
+                            LoadMore(modifier = Modifier.fillMaxWidth()) {
+                                Text(text = "加载中")
+                            }
                         },
-                        state = refreshLayoutState,
-                    ),
-                    modifier = Modifier.fillMaxSize(),
-                    footer = {
-                        LoadMore(modifier = Modifier.fillMaxWidth()) {
-                            Text(text = "加载中")
-                        }
-                    },
-                ) {
-                    BoxWithConstraints {
+                    ) {
+                        BoxWithConstraints {
 
-                        Column(
-                            modifier = Modifier
-                                .nestedScrollable(
-                                    nestedScrollableState = nestedScrollableState,
-                                    orientation = Orientation.Vertical
-                                )
-                                .verticalScroll(
-                                    parentScrollState,
-                                    enabled = false
-                                )
-                                .wrapContentHeight(
-                                    align = Alignment.Top,
-                                    unbounded = true
-                                )
-                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .nestedScrollable(
+                                        nestedScrollableState = nestedScrollableState,
+                                        orientation = Orientation.Vertical
+                                    )
+                                    .verticalScroll(
+                                        parentScrollState,
+                                        enabled = false
+                                    )
+                                    .wrapContentHeight(
+                                        align = Alignment.Top,
+                                        unbounded = true
+                                    )
+                            ) {
 
-                            ListItem(
-                                leadingContent = {
-                                    Icon(imageVector = Icons.Default.Star, contentDescription = null)
-                                },
-                                headlineText = {
-                                    Text(text = "排行榜")
-                                },
-                                trailingContent = {
-                                    Row {
-                                        IconButton(
-                                            onClick = {}
-                                        ) {
-                                            Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null)
+                                ListItem(
+                                    leadingContent = {
+                                        Icon(imageVector = Icons.Default.Star, contentDescription = null)
+                                    },
+                                    headlineText = {
+                                        Text(text = "排行榜")
+                                    },
+                                    trailingContent = {
+                                        Row {
+                                            IconButton(
+                                                onClick = {}
+                                            ) {
+                                                Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null)
+                                            }
+                                        }
+                                    }
+                                )
+
+                                if (screenState.rankingIllust.isNotEmpty()) {
+                                    // TODO else 展示
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        contentPadding = PaddingValues(8.dp),
+                                    ) {
+                                        itemsIndexed(screenState.rankingIllust) { index, rankingIllust ->
+                                            MangaRankCard(
+                                                imageUrl = rankingIllust.coverImageUrl ?: TODO("默认图片"),
+                                                author = rankingIllust.author,
+                                                title = rankingIllust.title,
+                                                pageCount = rankingIllust.pageCount,
+                                                authorAvatar = rankingIllust.authorAvatarUrl ?: TODO("默认图片"),
+                                                imageRequestBuilder = imageRequestBuilder(rankingIllust.coverImageUrl),
+                                                avatarImageRequestBuilder = imageRequestBuilder(rankingIllust.authorAvatarUrl),
+                                                modifier = Modifier.size(rankingIllust.cardHeight),
+                                                isFavorite = rankingIllust.isBookmark,
+                                                onFavoriteClick = {
+                                                    viewModel.changeRankingIllustBookmark(index)
+                                                },
+                                                onClick = {
+                                                    viewModel.openRankingIllustDetail(index)
+                                                }
+                                            )
                                         }
                                     }
                                 }
-                            )
 
-                            if (screenState.rankingIllust.isNotEmpty()) {
-                                // TODO else 展示
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    contentPadding = PaddingValues(8.dp),
-                                ) {
-                                    itemsIndexed(screenState.rankingIllust) { index, rankingIllust ->
-                                        MangaRankCard(
-                                            imageUrl = rankingIllust.coverImageUrl ?: TODO("默认图片"),
-                                            author = rankingIllust.author,
-                                            title = rankingIllust.title,
-                                            pageCount = rankingIllust.pageCount,
-                                            authorAvatar = rankingIllust.authorAvatarUrl ?: TODO("默认图片"),
-                                            imageRequestBuilder = imageRequestBuilder(rankingIllust.coverImageUrl),
-                                            avatarImageRequestBuilder = imageRequestBuilder(rankingIllust.authorAvatarUrl),
-                                            modifier = Modifier.size(rankingIllust.cardHeight),
-                                            isFavorite = rankingIllust.isBookmark,
-                                            onFavoriteClick = {
-                                                viewModel.changeRankingIllustBookmark(index)
-                                            },
-                                            onClick = {
-                                                viewModel.openRankingIllustDetail(index)
-                                            }
-                                        )
-                                    }
-                                }
-                            }
+                                ListItem(
+                                    leadingContent = {
+                                        Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
+                                    },
+                                    headlineText = {
+                                        Text(text = "为你推荐")
+                                    },
+                                )
 
-                            ListItem(
-                                leadingContent = {
-                                    Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
-                                },
-                                headlineText = {
-                                    Text(text = "为你推荐")
-                                },
-                            )
-
-                            if (screenState.illusts.isNotEmpty()) {
-                                // TODO else 展示
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
-                                    contentPadding = PaddingValues(8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.height(this@BoxWithConstraints.maxHeight),
-                                    state = childScrollState,
-                                    userScrollEnabled = false
-                                ) {
-                                    itemsIndexed(screenState.illusts) { index, illust ->
-                                        MangaCard(
-                                            imageUrl = illust.coverImageUrl ?: TODO("默认图片"),
-                                            pageCount = illust.pageCount,
-                                            modifier = Modifier.height(illust.cardHeight),
-                                            imageRequestBuilder = imageRequestBuilder(illust.coverImageUrl),
-                                            isFavorite = illust.isBookmark,
-                                            favoriteCount = illust.totalBookmarks,
-                                            title = illust.title,
-                                            tags = illust.tags.map { tag -> "#${tag.name}" },
-                                            onFavoriteClick = {
-                                                viewModel.changeIllustBookmark(index)
-                                            },
-                                            onClick = {
-                                                viewModel.openIllustDetail(index)
-                                            }
-                                        )
+                                if (screenState.illusts.isNotEmpty()) {
+                                    // TODO else 展示
+                                    LazyVerticalGrid(
+                                        columns = GridCells.Fixed(2),
+                                        contentPadding = PaddingValues(8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.height(this@BoxWithConstraints.maxHeight),
+                                        state = childScrollState,
+                                        userScrollEnabled = false
+                                    ) {
+                                        itemsIndexed(screenState.illusts) { index, illust ->
+                                            MangaCard(
+                                                imageUrl = illust.coverImageUrl ?: TODO("默认图片"),
+                                                pageCount = illust.pageCount,
+                                                modifier = Modifier.height(illust.cardHeight),
+                                                imageRequestBuilder = imageRequestBuilder(illust.coverImageUrl),
+                                                isFavorite = illust.isBookmark,
+                                                favoriteCount = illust.totalBookmarks,
+                                                title = illust.title,
+                                                tags = illust.tags.map { tag -> "#${tag.name}" },
+                                                onFavoriteClick = {
+                                                    viewModel.changeIllustBookmark(index)
+                                                },
+                                                onClick = {
+                                                    viewModel.openIllustDetail(index)
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                if (screenState.isOpenIllustDetail) {
-                    Dialog(
-                        onDismissRequest = {
-                            viewModel.closeIllustDetail()
-                        },
-                        properties = DialogProperties(
-                            dismissOnBackPress = true,
-                            usePlatformDefaultWidth = false
-                        )
-                    ) {
-                        IllustDetailScreen(
-                            initialPage = screenState.currentIllustPage,
-                            illustDetails = screenState.currentSelectIllusts?.map { illust ->
-                                IllustDetail(
-                                    title = illust.title,
-                                    caption = illust.caption,
-                                    images = illust.metaImages.map { url ->
-                                        IllustDetailImage(url, illust.height.toFloat() / illust.width)
-                                    },
-                                    author = illust.author,
-                                    authorAvatarUrl = illust.authorAvatarUrl ?: TODO("默认图片"),
-                                    isBookmark = illust.isBookmark,
-                                    totalViews = illust.totalViews,
-                                    totalBookmark = illust.totalBookmarks,
-                                    createDate = illust.createDate,
-                                    tags = illust.tags.map { tag ->
-                                        IllustDetailTag(tag.name, tag.translateName)
-                                    }
-                                )
-                            } ?: emptyList(),
-                            onCloseClick = {
+                    if (screenState.isOpenIllustDetail) {
+                        Dialog(
+                            onDismissRequest = {
                                 viewModel.closeIllustDetail()
-                            }
-                        )
+                            },
+                            properties = DialogProperties(
+                                dismissOnBackPress = true,
+                                usePlatformDefaultWidth = false
+                            )
+                        ) {
+                            IllustDetailScreen(
+                                initialPage = screenState.currentIllustPage,
+                                illustDetails = screenState.currentSelectIllusts?.map { illust ->
+                                    IllustDetail(
+                                        title = illust.title,
+                                        caption = illust.caption,
+                                        images = illust.metaImages.map { url ->
+                                            IllustDetailImage(url, illust.height.toFloat() / illust.width)
+                                        },
+                                        author = illust.author,
+                                        authorAvatarUrl = illust.authorAvatarUrl ?: TODO("默认图片"),
+                                        isBookmark = illust.isBookmark,
+                                        totalViews = illust.totalViews,
+                                        totalBookmark = illust.totalBookmarks,
+                                        createDate = illust.createDate,
+                                        tags = illust.tags.map { tag ->
+                                            IllustDetailTag(tag.name, tag.translateName)
+                                        }
+                                    )
+                                } ?: emptyList(),
+                                onCloseClick = {
+                                    viewModel.closeIllustDetail()
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
     }
+
 }
