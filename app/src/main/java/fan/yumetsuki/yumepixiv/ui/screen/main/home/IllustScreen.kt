@@ -134,6 +134,7 @@ fun IllustScreen(
                     coroutineScope.launch {
                         childScrollState.scrollToItem(0)
                         parentScrollState.scrollTo(0)
+                        reachTopVisible = false
                     }
                 }) {
                     Icon(imageVector = Icons.Default.ArrowUpward, contentDescription = null)
