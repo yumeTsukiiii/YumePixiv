@@ -10,10 +10,6 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -24,11 +20,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -36,15 +29,8 @@ import coil.request.ImageRequest
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import fan.yumetsuki.yumepixiv.ui.components.*
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetail
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailImage
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailScreen
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailTag
-import fan.yumetsuki.yumepixiv.ui.screen.web.navigateToWebView
 import fan.yumetsuki.yumepixiv.utils.pixivImageRequestBuilder
-import fan.yumetsuki.yumepixiv.viewmodels.MangaViewModel
 import fan.yumetsuki.yumepixiv.viewmodels.NovelViewModel
-import fan.yumetsuki.yumepixiv.viewmodels.isOpenIllustDetail
 import kotlinx.coroutines.launch
 
 @Composable

@@ -7,23 +7,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import dagger.hilt.android.lifecycle.HiltViewModel
-import fan.yumetsuki.yumepixiv.data.AppRepository
 import fan.yumetsuki.yumepixiv.data.NovelRepository
 import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
-import fan.yumetsuki.yumepixiv.data.model.Illust
 import fan.yumetsuki.yumepixiv.data.model.Novel
-import fan.yumetsuki.yumepixiv.network.PixivHosts
-import fan.yumetsuki.yumepixiv.ui.screen.web.navigateToWebView
+import fan.yumetsuki.yumepixiv.ui.screen.novelviewer.navigateToNovelViewer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
 import javax.inject.Inject
 
 @HiltViewModel
 class NovelViewModel @Inject constructor(
     pixivRecommendApi: PixivRecommendApi,
-    val appRepository: AppRepository,
 ): ViewModel() {
 
     private val repository = NovelRepository(pixivRecommendApi, viewModelScope)
@@ -48,11 +43,11 @@ class NovelViewModel @Inject constructor(
     }
 
     fun navigateToRankingNovelDetail(index: Int, navController: NavController) {
-        navigateToNovelDetail(_rankingNovels.value[index].id, navController)
+        navigateToNovelViewer(_rankingNovels.value[index].id, navController)
     }
 
     fun navigateToNovelDetail(index: Int, navController: NavController) {
-        navigateToNovelDetail(_novels.value[index].id, navController)
+        navigateToNovelViewer(_novels.value[index].id, navController)
     }
 
     fun reloadNovels() {
@@ -144,27 +139,8 @@ class NovelViewModel @Inject constructor(
         }
     }
 
-    private fun navigateToNovelDetail(novelId: Long, navController: NavController) {
-        navController.navigateToWebView(
-            url = URLEncoder.encode(
-                """
-                    https://${PixivHosts.AppApi}/webview/v2/novel
-                    ?id=${novelId}
-                    &font=default&font_size=16.0px
-                    &line_height=1.75
-                    &color=%023101010
-                    &background_color=%023EFEFEF
-                    &margin_top=56px
-                    &margin_bottom=53px
-                    &theme=light
-                    &use_block=true
-                    &viewer_version=20221031_ai
-                """.trimIndent(),
-                "UTF-8"
-            ),
-            token = appRepository.accessToken ?: error("access token is null"),
-            host = PixivHosts.AppApi
-        )
+    private fun navigateToNovelViewer(novelId: Long, navController: NavController) {
+        navController.navigateToNovelViewer(novelId)
     }
 
     private fun setupNovelFlow() {

@@ -5,7 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import fan.yumetsuki.yumepixiv.ui.screen.login.loginScreen
 import fan.yumetsuki.yumepixiv.ui.screen.main.mainScreen
-import fan.yumetsuki.yumepixiv.ui.screen.web.webViewScreen
+import fan.yumetsuki.yumepixiv.ui.screen.novelviewer.novelViewScreen
 import fan.yumetsuki.yumepixiv.ui.screen.welcome.welcome
 import fan.yumetsuki.yumepixiv.ui.screen.welcome.welcomeScreen
 
@@ -18,7 +18,7 @@ fun YumePixivApp() {
         welcomeScreen(navController)
         loginScreen()
         mainScreen(navController = navController)
-        webViewScreen()
+        novelViewScreen(rootNavController = navController)
     }
 
 }
