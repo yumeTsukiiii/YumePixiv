@@ -68,6 +68,24 @@ fun RefreshLayout(
         }
     }
 
+    LaunchedEffect(headerHeight) {
+        if (contentOffset <= 0) {
+            return@LaunchedEffect
+        }
+        if (abs(contentOffset) > headerHeight && headerHeight >= 0) {
+            contentOffset = footerHeight
+        }
+    }
+
+    LaunchedEffect(footerHeight) {
+        if (contentOffset >= 0) {
+            return@LaunchedEffect
+        }
+        if (abs(contentOffset) > footerHeight && footerHeight >= 0) {
+            contentOffset = -footerHeight
+        }
+    }
+
     Box(
         modifier = modifier
             .nestedScroll(scrollBehaviour.nestedScrollConnection)

@@ -29,6 +29,8 @@ import coil.request.ImageRequest
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import fan.yumetsuki.yumepixiv.ui.components.*
+import fan.yumetsuki.yumepixiv.ui.screen.main.components.LoadMoreFooter
+import fan.yumetsuki.yumepixiv.ui.screen.main.components.NoDataTip
 import fan.yumetsuki.yumepixiv.utils.pixivImageRequestBuilder
 import fan.yumetsuki.yumepixiv.viewmodels.NovelViewModel
 import kotlinx.coroutines.launch
@@ -39,6 +41,7 @@ private fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
         .crossfade(500)
 }
 
+@Suppress("DEPRECATION")
 @OptIn(
     ExperimentalFoundationApi::class,
     ExperimentalMaterial3Api::class,
@@ -114,8 +117,8 @@ fun NovelScreen(
     }
 
     // FIXME 偶现没有向上滚动一些
-    LaunchedEffect(screenState.isLoadMore) {
-        if (!screenState.isLoadMore) {
+    LaunchedEffect(screenState.isLoadMore, screenState.isError) {
+        if (!screenState.isLoadMore && !screenState.isError) {
             if (refreshLayoutState.contentOffset.value != 0) {
                 // nested scrollBy 需要反方向处理
                 // 向上滑动到底，delta 是 负数; scrollBy 调用时，支持传递的 value 到 delta
@@ -141,17 +144,15 @@ fun NovelScreen(
                     Icon(imageVector = Icons.Default.ArrowUpward, contentDescription = null)
                 }
             }
-        }
+        },
+        modifier = modifier
     ) {
         SwipeRefresh(state = swipeRefreshState, modifier = Modifier.padding(it), onRefresh = {
             viewModel.reloadNovels()
         }) {
             Box(modifier = Modifier.fillMaxSize()) {
                 if (screenState.rankingNovels.isEmpty() && screenState.novels.isEmpty() && !screenState.isReLoading) {
-                    Box(modifier = modifier) {
-                        // TODO UI 修改
-                        Text(text = "没有数据欸！！！")
-                    }
+                    NoDataTip(isError = screenState.isError)
                 } else if (screenState.rankingNovels.isNotEmpty() && screenState.novels.isNotEmpty()) {
                     RefreshLayout(
                         scrollBehaviour = RefreshLayoutDefaults.flingScrollBehaviour(
@@ -165,9 +166,11 @@ fun NovelScreen(
                         ),
                         modifier = Modifier.fillMaxSize(),
                         footer = {
-                            LoadMore(modifier = Modifier.fillMaxWidth()) {
-                                Text(text = "加载中")
-                            }
+                            LoadMoreFooter(
+                                isError = screenState.isError,
+                                modifier = Modifier.clickable {
+                                    viewModel.nextPageNovel()
+                                })
                         },
                     ) {
                         BoxWithConstraints {
@@ -259,7 +262,10 @@ fun NovelScreen(
                                                 modifier = Modifier
                                                     .height(novel.cardHeight)
                                                     .clickable {
-                                                        viewModel.navigateToNovelDetail(index, navController)
+                                                        viewModel.navigateToNovelDetail(
+                                                            index,
+                                                            navController
+                                                        )
                                                     },
                                                 isBookmark = novel.isBookmark,
                                                 bookmarks = novel.totalBookmarks,

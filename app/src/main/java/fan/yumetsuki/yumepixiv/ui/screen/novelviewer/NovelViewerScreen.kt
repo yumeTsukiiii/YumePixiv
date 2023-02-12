@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -70,6 +70,7 @@ fun NavController.navigateToNovelViewer(
     navigate("${novelViewer.route}?${arguments}", options)
 }
 
+@Suppress("unused")
 fun NavController.navigateToNovelViewer(
     novelId: Long,
     builder: NavOptionsBuilder.() -> Unit
@@ -102,7 +103,7 @@ fun NovelViewerScreen(
                     IconButton(onClick = {
                         rootNavController.navigateUp()
                     }) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = null)
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
                     }
                 },
                 title = {

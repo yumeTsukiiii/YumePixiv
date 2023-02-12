@@ -25,6 +25,7 @@ class IllustViewModel @Inject constructor(
         UiState(
             isReLoading = true,
             isLoadMore = false,
+            isError = false,
             currentIllustPage = -1,
             illusts = emptyList(),
             rankingIllust = emptyList()
@@ -45,9 +46,15 @@ class IllustViewModel @Inject constructor(
             _uiState.update {
                 it.copy(isReLoading = true, isLoadMore = false, currentIllustPage = -1)
             }
-            repository.refreshIllusts()
-            _uiState.update {
-                it.copy(isReLoading = false)
+            try {
+                repository.refreshIllusts()
+                _uiState.update {
+                    it.copy(isReLoading = false)
+                }
+            } catch (e: Throwable) {
+                _uiState.update {
+                    it.copy(isReLoading = false, isError = true, illusts = emptyList(), rankingIllust = emptyList())
+                }
             }
         }
     }
@@ -59,16 +66,22 @@ class IllustViewModel @Inject constructor(
     }
 
     fun nextPageIllust() {
-        if (uiState.value.isLoadMore) {
+        if (uiState.value.isLoadMore && !uiState.value.isError) {
             return
         }
         viewModelScope.launch(Dispatchers.Main) {
             _uiState.update { oldState ->
-                oldState.copy(isLoadMore = true)
+                oldState.copy(isLoadMore = true, isError = false)
             }
-            repository.nextPageIllust()
-            _uiState.update { oldState ->
-                oldState.copy(isLoadMore = false)
+            try {
+                repository.nextPageIllust()
+                _uiState.update { oldState ->
+                    oldState.copy(isLoadMore = false)
+                }
+            } catch (e: Throwable) {
+                _uiState.update { oldState ->
+                    oldState.copy(isLoadMore = true, isError = true)
+                }
             }
         }
     }
@@ -232,6 +245,7 @@ class IllustViewModel @Inject constructor(
     data class UiState(
         val isReLoading: Boolean,
         val isLoadMore: Boolean,
+        val isError: Boolean,
         val currentIllustPage: Int,
         val illusts: List<IllustState>,
         val rankingIllust: List<IllustState>,

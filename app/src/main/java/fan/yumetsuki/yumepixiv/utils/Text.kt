@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 
+// TODO 需要完善，一些 link 等等的处理
 fun spannableStringToAnnotatedString(
     text: Spanned,
     density: Density

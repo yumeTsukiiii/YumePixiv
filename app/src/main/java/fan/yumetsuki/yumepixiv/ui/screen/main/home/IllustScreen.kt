@@ -12,10 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,10 +26,7 @@ import coil.request.ImageRequest
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import fan.yumetsuki.yumepixiv.ui.components.*
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetail
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailImage
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailScreen
-import fan.yumetsuki.yumepixiv.ui.screen.main.components.IllustDetailTag
+import fan.yumetsuki.yumepixiv.ui.screen.main.components.*
 import fan.yumetsuki.yumepixiv.utils.pixivImageRequestBuilder
 import fan.yumetsuki.yumepixiv.viewmodels.IllustViewModel
 import fan.yumetsuki.yumepixiv.viewmodels.isOpenIllustDetail
@@ -44,6 +38,7 @@ private fun imageRequestBuilder(imageUrl: String): ImageRequest.Builder {
         .crossfade(500)
 }
 
+@Suppress("DEPRECATION")
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
     ExperimentalComposeUiApi::class, ExperimentalAnimationApi::class
 )
@@ -116,8 +111,8 @@ fun IllustScreen(
     }
 
     // FIXME 偶现没有向上滚动一些
-    LaunchedEffect(screenState.isLoadMore) {
-        if (!screenState.isLoadMore) {
+    LaunchedEffect(screenState.isLoadMore, screenState.isError) {
+        if (!screenState.isLoadMore && !screenState.isError) {
             if (refreshLayoutState.contentOffset.value != 0) {
                 // nested scrollBy 需要反方向处理
                 // 向上滑动到底，delta 是 负数; scrollBy 调用时，支持传递的 value 到 delta
@@ -144,7 +139,8 @@ fun IllustScreen(
                     Icon(imageVector = Icons.Default.ArrowUpward, contentDescription = null)
                 }
             }
-        }
+        },
+        modifier = modifier
     ) {
         SwipeRefresh(
             modifier = Modifier.padding(it),
@@ -155,10 +151,7 @@ fun IllustScreen(
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 if (screenState.rankingIllust.isEmpty() && screenState.illusts.isEmpty() && !screenState.isReLoading) {
-                    Box(modifier = modifier) {
-                        // TODO UI 修改
-                        Text(text = "没有数据欸！！！")
-                    }
+                    NoDataTip(isError = screenState.isError)
                 } else if (screenState.rankingIllust.isNotEmpty() && screenState.illusts.isNotEmpty()) {
                     RefreshLayout(
                         scrollBehaviour = RefreshLayoutDefaults.flingScrollBehaviour(
@@ -170,9 +163,12 @@ fun IllustScreen(
                         ),
                         modifier = Modifier.fillMaxSize(),
                         footer = {
-                            LoadMore(modifier = Modifier.fillMaxWidth()) {
-                                Text(text = "加载中")
-                            }
+                            LoadMoreFooter(
+                                isError = screenState.isError,
+                                modifier = Modifier.clickable {
+                                    viewModel.nextPageIllust()
+                                }
+                            )
                         },
                     ) {
                         BoxWithConstraints {
