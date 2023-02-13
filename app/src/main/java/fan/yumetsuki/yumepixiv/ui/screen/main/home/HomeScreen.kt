@@ -6,14 +6,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -27,7 +24,7 @@ import fan.yumetsuki.yumepixiv.viewmodels.MangaViewModel
 
 val home = Route(
     route = "home",
-    label = "首页",
+    label = "主页",
     icon = Icons.Default.Home,
 )
 
@@ -69,7 +66,6 @@ fun Home(
         mutableStateOf(0)
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val saveableStateHolder = rememberSaveableStateHolder()
 
 //    val pagerState = rememberPagerState()
@@ -89,27 +85,7 @@ fun Home(
 //        selectedTabIndex = selectedPage
 //    }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(imageVector = Icons.Default.Menu, contentDescription = null)
-                    }
-                },
-                title = {
-                    Text(text = "主页")
-                },
-                actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = null)
-                    }
-                },
-                scrollBehavior = scrollBehavior
-            )
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
 
         Column(modifier = Modifier.padding(paddingValues)) {
             TabRow(
