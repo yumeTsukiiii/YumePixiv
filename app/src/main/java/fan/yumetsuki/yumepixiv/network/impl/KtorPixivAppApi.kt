@@ -1,6 +1,6 @@
 package fan.yumetsuki.yumepixiv.network.impl
 
-import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.PixivAppApi
 import fan.yumetsuki.yumepixiv.di.AppApiHttpClient
 import fan.yumetsuki.yumepixiv.network.model.*
 import io.ktor.client.*
@@ -10,9 +10,9 @@ import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import javax.inject.Inject
 
-class KtorPixivRecommendApi @Inject constructor(
+class KtorPixivAppApi @Inject constructor(
     @AppApiHttpClient private val httpClient: HttpClient
-): PixivRecommendApi {
+): PixivAppApi {
 
     override suspend fun getRecommendIllusts(): IllustRecommendResult {
         return httpClient.get("v1/illust/recommended") {
@@ -102,6 +102,42 @@ class KtorPixivRecommendApi @Inject constructor(
         )
     }
 
+    override suspend fun getBookmarksIllusts(
+        userId: Long,
+        restrict: String,
+        maxBookmarkId: Long?,
+        tag: String?
+    ): PixivBookmarksIllusts {
+        return httpClient.get("v1/user/bookmarks/illust") {
+            parameter(UserId, userId)
+            parameter(Restrict, restrict)
+            if (maxBookmarkId != null) {
+                parameter(MaxBookmarkId, maxBookmarkId)
+            }
+            if (tag != null) {
+                parameter(Tag, tag)
+            }
+        }.body()
+    }
+
+    override suspend fun getBookmarksNovels(
+        userId: Long,
+        restrict: String,
+        maxBookmarkId: Long?,
+        tag: String?
+    ): PixivBookmarksNovels {
+        return httpClient.get("v1/user/bookmarks/novel") {
+            parameter(UserId, userId)
+            parameter(Restrict, restrict)
+            if (maxBookmarkId != null) {
+                parameter(MaxBookmarkId, maxBookmarkId)
+            }
+            if (tag != null) {
+                parameter(Tag, tag)
+            }
+        }.body()
+    }
+
     companion object {
         const val Filter = "filter"
         const val ForAndroid = "for_android"
@@ -111,6 +147,9 @@ class KtorPixivRecommendApi @Inject constructor(
         const val IncludeRankingIllusts = "include_ranking_illusts"
         const val IncludeRankingNovels = "include_ranking_novels"
         const val IncludePrivacyPolicy = "include_privacy_policy"
+        const val UserId = "userId"
+        const val MaxBookmarkId = "max_bookmark_id"
+        const val Tag = "tag"
     }
 
 }

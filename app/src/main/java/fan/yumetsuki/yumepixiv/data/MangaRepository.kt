@@ -1,6 +1,6 @@
 package fan.yumetsuki.yumepixiv.data
 
-import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.PixivAppApi
 import fan.yumetsuki.yumepixiv.network.model.PixivIllust
 import fan.yumetsuki.yumepixiv.data.model.Illust
 import fan.yumetsuki.yumepixiv.data.model.ImageModel
@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class MangaRepository constructor(
-    private val pixivRecommendApi: PixivRecommendApi,
+    private val pixivAppApi: PixivAppApi,
     private val coroutineScope: CoroutineScope
 ) {
 
@@ -36,7 +36,7 @@ class MangaRepository constructor(
 
     suspend fun refreshIllusts() {
         withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.getRecommendMangas().also { result ->
+            pixivAppApi.getRecommendMangas().also { result ->
                 _pagedIllusts.update {
                     buildList {
                         add(result.illusts.toIllustModel())
@@ -55,19 +55,19 @@ class MangaRepository constructor(
 
     suspend fun addIllustBookMark(illust: Illust) {
         return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.addIllustBookMark(illust.id, BookmarkRestrictPublic)
+            pixivAppApi.addIllustBookMark(illust.id, BookmarkRestrictPublic)
         }
     }
 
     suspend fun deleteIllustBookMark(illust: Illust) {
         return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.deleteIllustBookMark(illust.id)
+            pixivAppApi.deleteIllustBookMark(illust.id)
         }
     }
 
     suspend fun relatedIllusts(illust: Illust): List<Illust> {
         return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.relatedIllusts(illust.id).illusts.toIllustModel()
+            pixivAppApi.relatedIllusts(illust.id).illusts.toIllustModel()
         }
     }
 
@@ -77,7 +77,7 @@ class MangaRepository constructor(
         }
         nextIllustUrl?.also { nextUrl ->
             withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-                pixivRecommendApi.nextPageMangaIllusts(nextUrl).also { result ->
+                pixivAppApi.nextPageMangaIllusts(nextUrl).also { result ->
                     _pagedIllusts.update { oldIllusts ->
                         oldIllusts.toMutableList().apply {
                             add(result.illusts.toIllustModel())

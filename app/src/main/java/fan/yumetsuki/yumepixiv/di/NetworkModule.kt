@@ -6,7 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import fan.yumetsuki.yumepixiv.network.*
-import fan.yumetsuki.yumepixiv.network.impl.KtorPixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.impl.KtorPixivAppApi
 import fan.yumetsuki.yumepixiv.network.interceptor.HashInterceptor
 import fan.yumetsuki.yumepixiv.network.interceptor.TokenInterceptor
 import fan.yumetsuki.yumepixiv.data.AppRepository
@@ -21,8 +21,8 @@ abstract class NetworkModule {
 
     @Binds
     abstract fun bindPixivRecommendApi(
-        pixivRecommendApi: KtorPixivRecommendApi
-    ): PixivRecommendApi
+        pixivRecommendApi: KtorPixivAppApi
+    ): PixivAppApi
 
     @Binds
     abstract fun bindPixivAuthApi(

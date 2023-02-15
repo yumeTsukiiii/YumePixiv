@@ -1,6 +1,6 @@
 package fan.yumetsuki.yumepixiv.data
 
-import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.PixivAppApi
 import fan.yumetsuki.yumepixiv.data.model.Novel
 import fan.yumetsuki.yumepixiv.data.model.SeriesModel
 import fan.yumetsuki.yumepixiv.data.model.TagModel
@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class NovelRepository constructor(
-    private val pixivRecommendApi: PixivRecommendApi,
+    private val pixivAppApi: PixivAppApi,
     private val coroutineScope: CoroutineScope
 ) {
 
@@ -35,7 +35,7 @@ class NovelRepository constructor(
 
     suspend fun refreshNovels() {
         withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.getRecommendNovels().also { result ->
+            pixivAppApi.getRecommendNovels().also { result ->
                 _pagedNovels.update {
                     buildList {
                         add(result.novels.toNovelModel())
@@ -54,13 +54,13 @@ class NovelRepository constructor(
 
     suspend fun addNovelBookMark(novel: Novel) {
         return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.addNovelBookmark(novel.id, BookmarkRestrictPublic)
+            pixivAppApi.addNovelBookmark(novel.id, BookmarkRestrictPublic)
         }
     }
 
     suspend fun deleteNovelBookMark(novel: Novel) {
         return withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-            pixivRecommendApi.deleteNovelBookmark(novel.id)
+            pixivAppApi.deleteNovelBookmark(novel.id)
         }
     }
 
@@ -70,7 +70,7 @@ class NovelRepository constructor(
         }
         nextIllustUrl?.also { nextUrl ->
             withContext(coroutineScope.coroutineContext + Dispatchers.IO) {
-                pixivRecommendApi.nextPageNovels(nextUrl).also { result ->
+                pixivAppApi.nextPageNovels(nextUrl).also { result ->
                     _pagedNovels.update { oldIllusts ->
                         oldIllusts.toMutableList().apply {
                             add(result.novels.toNovelModel())

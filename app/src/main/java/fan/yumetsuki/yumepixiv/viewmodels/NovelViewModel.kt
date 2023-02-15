@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fan.yumetsuki.yumepixiv.data.NovelRepository
-import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.PixivAppApi
 import fan.yumetsuki.yumepixiv.data.model.Novel
 import fan.yumetsuki.yumepixiv.ui.screen.novelviewer.navigateToNovelViewer
 import kotlinx.coroutines.Dispatchers
@@ -18,10 +18,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NovelViewModel @Inject constructor(
-    pixivRecommendApi: PixivRecommendApi,
+    pixivAppApi: PixivAppApi,
 ): ViewModel() {
 
-    private val repository = NovelRepository(pixivRecommendApi, viewModelScope)
+    private val repository = NovelRepository(pixivAppApi, viewModelScope)
 
     private val _uiState = MutableStateFlow(
         UiState(

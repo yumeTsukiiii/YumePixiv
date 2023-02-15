@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fan.yumetsuki.yumepixiv.data.AppRepository
 import fan.yumetsuki.yumepixiv.data.IllustRepository
-import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.PixivAppApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val appRepository: AppRepository,
-    appRecommendApi: PixivRecommendApi
+    appRecommendApi: PixivAppApi
 ): ViewModel() {
 
     private val illustRepository = IllustRepository(appRecommendApi, viewModelScope)

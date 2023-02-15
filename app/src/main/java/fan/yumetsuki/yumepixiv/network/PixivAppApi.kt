@@ -2,7 +2,7 @@ package fan.yumetsuki.yumepixiv.network
 
 import fan.yumetsuki.yumepixiv.network.model.*
 
-interface PixivRecommendApi {
+interface PixivAppApi {
 
     /*-----------------------插画相关-----------------------*/
 
@@ -37,4 +37,10 @@ interface PixivRecommendApi {
     suspend fun addNovelBookmark(novelId: Long, restrict: String)
 
     suspend fun deleteNovelBookmark(novelId: Long)
+
+    /*-----------------------收藏相关-----------------------*/
+
+    suspend fun getBookmarksIllusts(userId: Long, restrict: String, maxBookmarkId: Long? = null, tag: String? = null): PixivBookmarksIllusts
+
+    suspend fun getBookmarksNovels(userId: Long, restrict: String, maxBookmarkId: Long? = null, tag: String? = null): PixivBookmarksNovels
 }

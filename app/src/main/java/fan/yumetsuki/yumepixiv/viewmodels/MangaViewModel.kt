@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import fan.yumetsuki.yumepixiv.network.PixivRecommendApi
+import fan.yumetsuki.yumepixiv.network.PixivAppApi
 import fan.yumetsuki.yumepixiv.data.MangaRepository
 import fan.yumetsuki.yumepixiv.data.model.Illust
 import kotlinx.coroutines.Dispatchers
@@ -16,10 +16,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MangaViewModel @Inject constructor(
-    pixivRecommendApi: PixivRecommendApi
+    pixivAppApi: PixivAppApi
 ): ViewModel() {
 
-    private val repository = MangaRepository(pixivRecommendApi, viewModelScope)
+    private val repository = MangaRepository(pixivAppApi, viewModelScope)
 
     private val _uiState = MutableStateFlow(
         UiState(
